@@ -2,9 +2,8 @@ name: Automated COT Data Updater
 
 on:
   schedule:
-    # Läuft jeden Samstagmorgen um 02:00 Uhr nachts (nachdem die CFTC Freitagabend veröffentlicht hat)
     - cron: '0 2 * * 6'
-  workflow_dispatch: # Erlaubt es dir, den Scan jederzeit manuell per Knopfdruck zu starten
+  workflow_dispatch: 
 
 jobs:
   update-data:
@@ -30,38 +29,48 @@ jobs:
           import io
           import re
 
-          # 1. Download des aktuellen komprimierten Jahresberichts der CFTC
+          # 1. Download des aktuellen komprimierten Jahresberichts der CFTC (2026)
           url = "https://www.cftc.gov/files/dea/history/deahist2026.zip"
           r = requests.get(url)
           z = zipfile.ZipFile(io.BytesIO(r.content))
           
-          # Entpacken und in Dataframe laden
+          # In Dataframe laden
           df = pd.read_csv(z.open(z.namelist()[0]))
           
-          # Filter auf relevante Rohstoffe (Legacy Report Format)
-          # Wir extrahieren die Netto-Positionen der Commercials
-          gold = df[df['Market_and_Market_Exchange'].str.contains("GOLD - COMMODITY EXCHANGE INC.", na=False)].iloc[0]
-          oil = df[df['Market_and_Market_Exchange'].str.contains("CRUDE OIL, LIGHT SWEET - NEW YORK MERCANTILE EXCHANGE", na=False)].iloc[0]
-          gas = df[df['Market_and_Market_Exchange'].str.contains("NATURAL GAS - NEW YORK MERCANTILE EXCHANGE", na=False)].iloc[0]
+          def get_commodity_data(name_string):
+              try:
+                  row = df[df['Market_and_Market_Exchange'].str.contains(name_string, na=False, case=False)].iloc[0]
+                  longs = row['Comm_Positions_Long_All']
+                  shorts = row['Comm_Positions_Short_All']
+                  total = longs + shorts
+                  score = int((longs / total) * 100) if total > 0 else 50
+                  position = "Net-Long" if score > 50 else "Net-Short"
+                  return score, position
+              except Exception as e:
+                  print(f"Fehler bei: {name_string} - {e}")
+                  return 50, "Neutral"
 
-          def calculate_score(longs, shorts):
-              total = longs + shorts
-              if total == 0: return 50
-              return int((longs / total) * 100)
+          # Extrahieren ALLER geforderten Rohstoffe über ihre exakten CFTC-Bezeichnungen
+          oil_score, oil_pos = get_commodity_data("CRUDE OIL, LIGHT SWEET")
+          gas_score, gas_pos = get_commodity_data("NATURAL GAS - NEW YORK MET")
+          gold_score, gold_pos = get_commodity_data("GOLD - COMMODITY EXCHANGE")
+          wheat_score, wheat_pos = get_commodity_data("WHEAT - CHICAGO BOARD OF TRADE")
+          corn_score, corn_pos = get_commodity_data("CORN - CHICAGO BOARD OF TRADE")
+          coffee_score, coffee_pos = get_commodity_data("COFFEE C - ICE FUTURES U.S.")
+          cocoa_score, cocoa_pos = get_commodity_data("COCOA - ICE FUTURES U.S.")
 
-          # Berechnung der realen Scores basierend auf Long vs Short Verhältnis
-          gold_score = calculate_score(gold['Comm_Positions_Long_All'], gold['Comm_Positions_Short_All'])
-          oil_score = calculate_score(oil['Comm_Positions_Long_All'], oil['Comm_Positions_Short_All'])
-          gas_score = calculate_score(gas['Comm_Positions_Long_All'], gas['Comm_Positions_Short_All'])
-
-          # 2. index.html einlesen und den JS-Datenblock im Quellcode austauschen
+          # 2. index.html einlesen und den JS-Datenblock updaten
           with open("index.html", "r", encoding="utf-8") as f:
               html = f.read()
 
           new_database = f"""window.cotData = {{
-              "CL=F": {{ name: "Rohöl", cotScore: {oil_score}, position: "{'Net-Long' if oil_score > 50 else 'Net-Short'}" }},
-              "GC=F": {{ name: "Gold", cotScore: {gold_score}, position: "{'Net-Long' if gold_score > 50 else 'Net-Short'}" }},
-              "NG=F": {{ name: "Erdgas", cotScore: {gas_score}, position: "{'Net-Long' if gas_score > 50 else 'Net-Short'}" }}
+              "CL=F": {{ name: "Rohöl (Crude Oil)", cotScore: {oil_score}, position: "{oil_pos}" }},
+              "NG=F": {{ name: "Erdgas (Nat Gas)", cotScore: {gas_score}, position: "{gas_pos}" }},
+              "GC=F": {{ name: "Gold", cotScore: {gold_score}, position: "{gold_pos}" }},
+              "W=F": {{ name: "Weizen (Wheat)", cotScore: {wheat_score}, position: "{wheat_pos}" }},
+              "C=F": {{ name: "Mais (Corn)", cotScore: {corn_score}, position: "{corn_pos}" }},
+              "KC=F": {{ name: "Kaffee (Coffee)", cotScore: {coffee_score}, position: "{coffee_pos}" }},
+              "CC=F": {{ name: "Kakao (Cocoa)", cotScore: {cocoa_score}, position: "{cocoa_pos}" }}
           }};"""
 
           # Ersetze das alte Objekt via Regulärem Ausdruck
@@ -69,13 +78,13 @@ jobs:
 
           with open("index.html", "w", encoding="utf-8") as f:
               f.write(html_updated)
-          print("HTML-Daten erfolgreich mit echten Regierungsdaten überschrieben!")
+          print("HTML-Daten für alle 7 Rohstoffe erfolgreich aktualisiert!")
           EOF
 
-      - name: Commit & Push Changes back to GitHub Pages
+      - name: Commit & Push Changes
         run: |
           git config --global user.name "COT-Bot"
           git config --global user.email "bot@github.com"
           git add index.html
-          git commit -m "🤖 Automatisiertes COT-Update von US-Regierung eingepflegt" || exit 0
+          git commit -m "🤖 Alle Agrar- und Energie-COT-Daten eingepflegt" || exit 0
           git push
