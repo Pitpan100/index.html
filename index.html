@@ -16,10 +16,8 @@
         <p class="text-xs text-slate-400 mt-1">Live-Daten von den globalen Rohstoffmärkten (2026)</p>
     </div>
 
-    <!-- Hauptkarte -->
     <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 shadow-sm space-y-4">
         
-        <!-- Tabelle für Metriken -->
         <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-slate-300">
                 <thead>
@@ -38,7 +36,6 @@
 
         <hr class="border-slate-800">
 
-        <!-- Scores unten -->
         <div class="grid grid-cols-2 gap-4 text-center py-2 bg-slate-950 rounded-lg">
             <div>
                 <p class="text-[10px] uppercase text-slate-500 font-semibold tracking-wider">Gesamt-Score</p>
@@ -50,13 +47,12 @@
             </div>
         </div>
 
-        <!-- Controls -->
         <div class="space-y-3 pt-2">
             <div class="flex items-center justify-between bg-slate-950 p-2 rounded-lg border border-slate-800">
                 <span class="text-xs text-slate-400 font-medium pl-1">Rohstoff</span>
                 <div class="flex items-center space-x-1">
                     <button onclick="prevCommodity()" class="px-2 py-1 bg-slate-800 rounded text-xs hover:bg-slate-700 font-bold">&lt;</button>
-                    <span id="commodity-name" class="px-4 py-1 bg-slate-900 border border-slate-700 rounded text-xs font-semibold min-w-[125px] text-center text-white">Kakao</span>
+                    <span id="commodity-name" class="px-4 py-1 bg-slate-900 border border-slate-700 rounded text-xs font-semibold min-w-[135px] text-center text-white">Kakao</span>
                     <button onclick="nextCommodity()" class="px-2 py-1 bg-slate-800 rounded text-xs hover:bg-slate-700 font-bold">&gt;</button>
                 </div>
             </div>
@@ -68,13 +64,15 @@
     </div>
 
     <script>
-        // Erweiterte Liste mit 5 Rohstoffen und den offiziellen Yahoo-Finance-Tickern
+        // Jetzt erweitert auf 7 Rohstoffe (inklusive Weizen und Mais)
         const commodities = [
-            { id: "cocoa", name: "Kakao (Cocoa)", ticker: "CC=F", baseScore: 85, defaultPrice: "4400", wText: "Anhaltende Dürre in Westafrika beeinträchtigt Ernte.", pText: "Regulierungen zu EUDR erhöhen Import-Druck." },
+            { id: "cocoa", name: "Kakao (Cocoa)", ticker: "CC=F", baseScore: 85, defaultPrice: "9200", wText: "Anhaltende Dürre in Westafrika beeinträchtigt Ernte.", pText: "Regulierungen zu EUDR erhöhen Import-Druck." },
             { id: "coffee", name: "Kaffee (Coffee)", ticker: "KC=F", baseScore: 80, defaultPrice: "255", wText: "Saisonale Regenfälle in Brasilien stabilisieren Angebot.", pText: "Exportzölle in Vietnam sorgen für Preisstützung." },
-            { id: "oil", name: "Rohöl (Crude Oil)", ticker: "CL=F", baseScore: 72, defaultPrice: "75", wText: "Hurrikan-Saison im Golf von Mexiko wird überwacht.", pText: "OPEC+ Förderkürzungen verknappen das globale Angebot." },
-            { id: "gas", name: "Erdgas (Nat Gas)", ticker: "NG=F", baseScore: 65, defaultPrice: "3.2", wText: "Milde Temperaturen reduzieren kurzfristigen Heizbedarf.", pText: "Infrastrukturausbau bei LNG-Terminals schreitet voran." },
-            { id: "gold", name: "Gold", ticker: "GC=F", baseScore: 78, defaultPrice: "4200", wText: "Kein direkter Wettereinfluss auf Minenförderung.", pText: "Zentralbank-Käufe und geopolitische Krisen stützen Kurs." }
+            { id: "wheat", name: "Weizen (Wheat)", ticker: "W=F", baseScore: 70, defaultPrice: "610", wText: "Trockenheit in den US-Plains bedroht die Winterweizen-Ernte.", pText: "Exportrestriktionen und geopolitische Spannungen im Schwarzmeerraum." },
+            { id: "corn", name: "Mais (Corn)", ticker: "C=F", baseScore: 68, defaultPrice: "440", wText: "Regenmengen im Corn Belt der USA sorgen für optimalen Start der Aussaat.", pText: "Keine akuten Export-Stopps; stabiler globaler Handelsfluss." },
+            { id: "oil", name: "Rohöl (Crude Oil)", ticker: "CL=F", baseScore: 72, defaultPrice: "75", wText: "Hurrikan-Risiko im Golf von Mexiko gefährdet Bohrinseln.", pText: "OPEC+ Förderkürzungen verknappen das Angebot absichtlich." },
+            { id: "gas", name: "Erdgas (Nat Gas)", ticker: "NG=F", baseScore: 65, defaultPrice: "2.8", wText: "Milde Temperaturen reduzieren kurzfristig die Heiznachfrage.", pText: "Flüssiggas-Terminals (LNG) laufen auf hoher Kapazität." },
+            { id: "gold", name: "Gold", ticker: "GC=F", baseScore: 78, defaultPrice: "2350", wText: "Wetterfaktoren haben keinen messbaren Einfluss.", pText: "Starke Käufe der Zentralbanken stützen das Preisniveau langfristig." }
         ];
         
         let currentIndex = 0;
@@ -90,7 +88,6 @@
                 const changePercent = ((currentPrice - prevClose) / prevClose) * 100;
                 return { price: currentPrice, change: changePercent, currency: meta.currency };
             } catch (error) {
-                // Fallback, falls die API temporär blockiert wird
                 return { price: commodity.defaultPrice, change: 0.00, currency: "USD" };
             }
         }
@@ -100,8 +97,6 @@
             document.getElementById('commodity-name').innerText = current.name;
             
             const market = await fetchLiveMarketData(current);
-            
-            // Dynamischer Score gekoppelt an die tägliche Preisänderung
             const dynamicScore = Math.min(100, Math.max(0, Math.round(current.baseScore + (market.change * 2))));
             
             document.getElementById('total-score').innerText = dynamicScore + "/100";
@@ -129,7 +124,6 @@
                 </tr>
             `;
             
-            // Zwischenspeichern für den Export
             current.lastCalculatedScore = dynamicScore;
             current.lastPrice = market.price;
         }
