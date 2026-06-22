@@ -1,5 +1,4 @@
 import os
-import re
 import requests
 import zipfile
 import io
@@ -33,8 +32,6 @@ def get_live_term_structure(ticker):
 def fetch_cftc_data():
     print("Lade offizielle CFTC-Daten...")
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
-    
-    # Ausfallsichere, fortlaufende CFTC-Datenquelle (garantiert immer aktiv)
     url = "https://www.cftc.gov/dea/futures/deafut.zip"
     
     try:
@@ -59,7 +56,6 @@ def main():
         asset_df = df[df['Market_and_Exchange_Names'].str.contains(cftc_name, case=False, na=False)].copy()
         
         if asset_df.empty:
-            print(f"Keine Daten für {cftc_name}")
             continue
             
         latest = asset_df.iloc[0]
@@ -98,19 +94,25 @@ def main():
             "weather": weather_map.get(ticker, "Neutral")
         }
 
-    # Datei index.html aktualisieren
     with open("index.html", "r", encoding="utf-8") as f:
-        html_content = f.read()
+        html_lines = f.readlines()
 
-    json_string = json.dumps(output_data, indent=12, ensure_ascii=False)
-    js_replacement = f"window.cotData = {json_string.strip()};"
-    
-    html_content = re.sub(r"window\.cotData = \{.*?\};", js_replacement, html_content, flags=re.DOTALL)
+    new_lines = []
+    for line in html_lines:
+        # Falls eine alte window.cotData Zuweisung existiert, überspringen wir sie
+        if "window.cotData = {" in line and "// COT_DATA_PLACEHOLDER" not in html_lines[html_lines.index(line)-1]:
+            continue
+        
+        new_lines.append(line)
+        
+        if "// COT_DATA_PLACEHOLDER" in line:
+            json_data = json.dumps(output_data, ensure_ascii=False)
+            new_lines.append(f"        window.cotData = {json_data};\n")
 
     with open("index.html", "w", encoding="utf-8") as f:
-        f.write(html_content)
+        f.writelines(new_lines)
         
-    print("index.html erfolgreich mit echten Daten aktualisiert!")
+    print("index.html erfolgreich ohne Regex aktualisiert!")
 
 if __name__ == "__main__":
     main()
