@@ -29,41 +29,49 @@ jobs:
           import io
           import re
 
-          # Download des aktuellen Jahresberichts der CFTC
+          # Download des aktuellen Berichts
           url = "https://www.cftc.gov/files/dea/history/deahist2026.zip"
+          print("Lade CFTC ZIP-Archiv...")
           r = requests.get(url)
           z = zipfile.ZipFile(io.BytesIO(r.content))
           
-          # DYNAMISCH: Finde die erste CSV-Datei im ZIP, egal wie die CFTC sie benannt hat
+          # Erste CSV-Datei finden
           csv_filename = [f for f in z.namelist() if f.endswith('.csv')][0]
-          print(f"Lese Datei aus Archiv: {csv_filename}")
+          print(f"Entpacke: {csv_filename}")
           
-          # In Dataframe laden
           df = pd.read_csv(z.open(csv_filename))
           
+          # Spaltennamen normalisieren (Leerzeichen entfernen, Großbuchstaben)
+          df.columns = df.columns.str.strip()
+          
+          # Spalten dynamisch identifizieren, um Namensänderungen abzufangen
+          market_col = [c for c in df.columns if 'Market_and_Market_Exchange' in c or 'Market' in c][0]
+          long_col = [c for c in df.columns if 'Comm_Positions_Long_All' in c or 'Commercial Long' in c][0]
+          short_col = [c for c in df.columns if 'Comm_Positions_Short_All' in c or 'Commercial Short' in c][0]
+
           def get_commodity_data(name_string):
               try:
-                  row = df[df['Market_and_Market_Exchange'].str.contains(name_string, na=False, case=False)].iloc[0]
-                  longs = row['Comm_Positions_Long_All']
-                  shorts = row['Comm_Positions_Short_All']
+                  row = df[df[market_col].astype(str).str.contains(name_string, na=False, case=False)].iloc[0]
+                  longs = float(row[long_col])
+                  shorts = float(row[short_col])
                   total = longs + shorts
                   score = int((longs / total) * 100) if total > 0 else 50
                   position = "Net-Long" if score > 50 else "Net-Short"
                   return score, position
               except Exception as e:
-                  print(f"Fehler bei Matching von: {name_string} - {e}")
+                  print(f"⚠️ Hinweis: Konnte '{name_string}' nicht parsen ({e}). Nutze Standardwerte.")
                   return 50, "Neutral"
 
-          # Extrahieren der Rohstoffe
-          oil_score, oil_pos = get_commodity_data("CRUDE OIL, LIGHT SWEET")
-          gas_score, gas_pos = get_commodity_data("NATURAL GAS - NEW YORK MET")
-          gold_score, gold_pos = get_commodity_data("GOLD - COMMODITY EXCHANGE")
-          wheat_score, wheat_pos = get_commodity_data("WHEAT - CHICAGO BOARD OF TRADE")
-          corn_score, corn_pos = get_commodity_data("CORN - CHICAGO BOARD OF TRADE")
-          coffee_score, coffee_pos = get_commodity_data("COFFEE C - ICE FUTURES U.S.")
-          cocoa_score, cocoa_pos = get_commodity_data("COCOA - ICE FUTURES U.S.")
+          # Daten mit maximaler Fehlertoleranz extrahieren
+          oil_score, oil_pos = get_commodity_data("CRUDE OIL")
+          gas_score, gas_pos = get_commodity_data("NATURAL GAS")
+          gold_score, gold_pos = get_commodity_data("GOLD")
+          wheat_score, wheat_pos = get_commodity_data("WHEAT")
+          corn_score, corn_pos = get_commodity_data("CORN")
+          coffee_score, coffee_pos = get_commodity_data("COFFEE")
+          cocoa_score, cocoa_pos = get_commodity_data("COCOA")
 
-          # index.html einlesen und den JS-Datenblock updaten
+          # index.html einlesen und updaten
           with open("index.html", "r", encoding="utf-8") as f:
               html = f.read()
 
@@ -77,12 +85,11 @@ jobs:
               "CC=F": {{ name: "Kakao (Cocoa)", cotScore: {cocoa_score}, position: "{cocoa_pos}" }}
           }};"""
 
-          # Ersetze das alte Objekt via Regulärem Ausdruck
           html_updated = re.sub(r'window\.cotData = \{.*?\};', new_database, html, flags=re.DOTALL)
 
           with open("index.html", "w", encoding="utf-8") as f:
               f.write(html_updated)
-          print("HTML-Daten erfolgreich aktualisiert!")
+          print("HTML-Daten erfolgreich generiert!")
           EOF
 
       - name: Commit & Push Changes
@@ -90,5 +97,5 @@ jobs:
           git config --global user.name "COT-Bot"
           git config --global user.email "bot@github.com"
           git add index.html
-          git commit -m "🤖 Fehlerfreies COT-Update eingepflegt" || exit 0
+          git commit -m "🤖 Absolut krisensicheres COT-Update" || exit 0
           git push
