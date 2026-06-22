@@ -9,6 +9,10 @@ on:
 jobs:
   update-data:
     runs-on: ubuntu-latest
+    # CRITICAL FIX: Erteilt der Action die Erlaubnis, Code ins Repo zu pushen
+    permissions:
+      contents: write
+      
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
