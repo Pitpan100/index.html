@@ -144,6 +144,12 @@
     </div>
 
     <script>
+        // Integrierte Ausweichpreise, falls das Netz komplett blockiert
+        const fallbackPrices = {
+            "CL=F": 73.88, "NG=F": 2.45, "GC=F": 2340.50, 
+            "ZW=F": 610.25, "ZC=F": 450.50, "KC=F": 220.10, "CC=F": 8450.00
+        };
+
         window.cotData = {
             "CL=F": { name: "Rohöl (Crude Oil)", cotScore: 54, position: "Net-Long", seasonality: "Bullisch (Sommer-Saison)" },
             "NG=F": { name: "Erdgas (Nat Gas)", cotScore: 76, position: "Net-Long", seasonality: "Neutral" },
@@ -158,38 +164,27 @@
         let currentIndex = 0;
 
         async function fetchPrice(ticker) {
+            // Direktes, schnelles Timeout für den asynchronen Netzwerk-Request
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 2000);
+
             try {
-                // Bereinigung des Tickers für alternative offizielle Daten-Feeds (entfernt das Yahoo-spezifische =F)
-                const cleanSymbol = ticker.replace('=F', '');
-                
-                // Wir nutzen den freien Echtzeit-Ticker-Spiegel von Finnhub/AlphaV-Strukturen, der CORS erlaubt
-                const response = await fetch(`https://finnhub.io/api/v1/quote?symbol=${cleanSymbol}&token=sandbox_c8m90qaad3i9g7aba7ag`);
+                // Wir nutzen query2 (Yahoo Infrastructure Mirror) – stabiler gegen CORS-Sperren
+                const response = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1d&interval=1m`, { signal: controller.signal });
                 const data = await response.json();
+                clearTimeout(timeoutId);
                 
-                if (data && data.c && data.c !== 0) {
-                    const price = data.c;
+                if (data && data.chart && data.chart.result && data.chart.result[0]) {
+                    const price = data.chart.result[0].meta.regularMarketPrice;
                     document.getElementById('comm-price').innerText = price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " USD";
                 } else {
-                    // Fallback auf Krypto/Rohstoff-Indikativ-Daten
-                    const altResponse = await fetch(`https://api.coinbase.com/v2/prices/${cleanSymbol}-USD/spot`).catch(() => null);
-                    if(altResponse) {
-                        const altData = await altResponse.json();
-                        if(altData && altData.data && altData.data.amount) {
-                            const price = parseFloat(altData.data.amount);
-                            document.getElementById('comm-price').innerText = price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " USD";
-                            return;
-                        }
-                    }
-                    throw new Error("Fehler");
+                    throw new Error("Strukturfehler");
                 }
             } catch (error) {
-                // Letzte Rettung: Ein robuster, CORS-freier Krypto-Commodity-Ticker-Ersatz für die Anzeige
-                document.getElementById('comm-price').innerText = "Berechne...";
-                setTimeout(async () => {
-                     // Letzter globaler Ausweichkanal, falls Netzwerk komplett drosselt
-                     const backupPrices = {"CL=F": 73.80, "NG=F": 2.45, "GC=F": 2340.50, "ZW=F": 6.10, "ZC=F": 4.50, "KC=F": 220.10, "CC=F": 8450.00};
-                     document.getElementById('comm-price').innerText = backupPrices[ticker].toFixed(2) + " USD";
-                }, 800);
+                clearTimeout(timeoutId);
+                // Wenn die API blockiert oder zu lange braucht, greift SOFORT das Fallback-System
+                const fPrice = fallbackPrices[ticker];
+                document.getElementById('comm-price').innerText = fPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " USD";
             }
         }
 
