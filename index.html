@@ -13,7 +13,12 @@
 
     <div class="bg-slate-900 p-4 rounded-xl shadow-md border border-slate-800 mb-4">
         <h1 class="text-xl font-bold tracking-tight">Commodity Intelligence Dashboard</h1>
-        <p class="text-xs text-slate-400 mt-1">Live-Daten, Terminstrukturen, Saisonalität & COT-Daten (2026)</p>
+        <p class="text-xs text-slate-400 mt-1">Live-Daten, Terminstrukturen & Smart-Money-Divergenzen (2026)</p>
+    </div>
+
+    <div id="warning-banner" class="hidden bg-amber-500/10 border border-amber-500/30 text-amber-400 p-3 rounded-xl mb-4 text-xs space-y-1">
+        <p class="font-bold flex items-center">⚠️ SMART MONEY DIVERGENZ DETEKTIERT</p>
+        <p class="text-slate-300">Preise extrem hoch (Hyper-Back), aber Commercials sichern aggressiv nach unten ab (Net-Short). Risiko für scharfe Trendwende steigt!</p>
     </div>
 
     <div class="bg-slate-900 rounded-xl p-4 border border-slate-800 shadow-sm space-y-4">
@@ -79,7 +84,6 @@
     </div>
 
     <script>
-        // Datenmodell erweitert um Commercial COT-Daten und Trends
         const commodities = [
             { id: "cocoa", name: "Kakao (Cocoa)", ticker: "CC=F", baseScore: 85, defaultPrice: "9200", wText: "Anhaltende Dürre in Westafrika beeinträchtigt Ernte.", pText: "Regulierungen zu EUDR erhöhen Import-Druck.", season: "Long", sText: "Historische Verknappung vor den Hauptverarbeitungsmonaten im Sommer.", cot: "Net-Short Trend", cotScore: 35, cotText: "Commercials sichern extrem stark ab (Short-Hedge), da Preise historisch hoch sind." },
             { id: "coffee", name: "Kaffee (Coffee)", ticker: "KC=F", baseScore: 80, defaultPrice: "255", wText: "Saisonale Regenfälle in Brasilien stabilisieren Angebot.", pText: "Exportzölle in Vietnam sorgen für Preisstützung.", season: "Long", sText: "Frost- und Winterrisiko in Südamerika stützt statistisch die Preise.", cot: "Net-Long Trend", cotScore: 82, cotText: "Smart Money baut physische Kaufpositionen auf, um sich gegen Engpässe abzusichern." },
@@ -140,6 +144,17 @@
             document.getElementById('total-score').innerText = dynamicScore + "/100";
             document.getElementById('live-price').innerText = `${market.price} ${market.currency} (${market.change >= 0 ? '+' : ''}${market.change.toFixed(2)}%)`;
 
+            // DEKTION DER SMART-MONEY-DIVERGENZ:
+            // Wenn Score hoch (Verknappung/Hyperback) und Commercials Short (cotScore niedrig)
+            const banner = document.getElementById('warning-banner');
+            if (dynamicScore >= 80 && current.cotScore <= 45) {
+                banner.classList.remove('hidden');
+                current.hasDivergenceWarning = true;
+            } else {
+                banner.classList.add('hidden');
+                current.hasDivergenceWarning = false;
+            }
+
             const tbody = document.getElementById('metrics-body');
             tbody.innerHTML = `
                 <tr class="border-b border-slate-800/50">
@@ -168,7 +183,6 @@
                 </tr>
             `;
             
-            // Zustand für Export sichern
             current.lastCalculatedScore = dynamicScore;
             current.lastPrice = market.price;
             current.lastStructure = structure.label;
@@ -194,10 +208,15 @@
             markup += `| Saisonalität | ${current.season} | ${current.season === 'Long' ? '88' : '45'} | ${current.sText} |\n`;
             markup += `| Marktpreis (Live) | ${current.lastPrice} | -- | Aktueller Kurs. |\n`;
             markup += `| Wetter-Status | Monitoring | 85 | ${current.wText} |\n\n`;
+            
+            if (current.hasDivergenceWarning) {
+                markup += `*⚠️ ACHTUNG: Smart-Money-Divergenz aktiv! Risiko für Trendwende hoch.*\n`;
+            }
+            
             markup += `*Gesamt-Score:* ${current.lastCalculatedScore}/100 (${current.lastStructure} / COT: ${current.cot} / Saison: ${current.season})`;
             
             navigator.clipboard.writeText(markup).then(() => {
-                alert("Confluence-Markup inkl. Commercial-COT-Trend kopiert!");
+                alert("Confluence-Markup inkl. Divergenz-Warnung kopiert!");
             });
         }
 
@@ -205,3 +224,4 @@
     </script>
 </body>
 </html>
+
