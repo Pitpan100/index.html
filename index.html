@@ -73,7 +73,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 0;
+            padding: 12px 0;
             border-bottom: 1px solid #1e293b;
             font-size: 13px;
         }
@@ -114,7 +114,7 @@
     <div class="card">
         <div class="header">
             <h1>Commodity Intelligence</h1>
-            <p>100% Autark via Stable API & CFTC</p>
+            <p>100% Autark via CFTC, Yahoo & Weather</p>
         </div>
 
         <div class="price-box">
@@ -135,6 +135,14 @@
                 <span class="label">COT Saisonalität:</span>
                 <span class="value" id="cot-season" style="color: #fbbf24;">--</span>
             </div>
+            <div class="data-row">
+                <span class="label">Terminkurve (Futures):</span>
+                <span class="value" id="term-structure">--</span>
+            </div>
+            <div class="data-row">
+                <span class="label">Wetter-Einfluss:</span>
+                <span class="value" id="weather-impact">--</span>
+            </div>
         </div>
 
         <div class="navigation">
@@ -144,23 +152,22 @@
     </div>
 
     <script>
-        // Lokale krisensichere Fallbacks für Daten und Preise, falls API oder GitHub-Skript patzen
         const fallbackPrices = {
             "CL=F": 73.88, "NG=F": 2.45, "GC=F": 2340.50, 
             "ZW=F": 610.25, "ZC=F": 450.50, "KC=F": 220.10, "CC=F": 8450.00
         };
 
         const defaultMetaData = {
-            "CL=F": { name: "Rohöl (Crude Oil)", cotScore: 54, position: "Net-Long", seasonality: "Bullisch (Sommer-Saison)" },
-            "NG=F": { name: "Erdgas (Nat Gas)", cotScore: 76, position: "Net-Long", seasonality: "Neutral" },
-            "GC=F": { name: "Gold", cotScore: 41, position: "Net-Short", seasonality: "Bärisch (Sommer-Tief)" },
-            "ZW=F": { name: "Weizen (Wheat)", cotScore: 49, position: "Neutral", seasonality: "Bärisch (Ernte-Druck)" },
-            "ZC=F": { name: "Mais (Corn)", cotScore: 51, position: "Neutral", seasonality: "Bärisch (Ernte-Druck)" },
-            "KC=F": { name: "Kaffee (Coffee)", cotScore: 73, position: "Net-Long", seasonality: "Bullisch" },
-            "CC=F": { name: "Kakao (Cocoa)", cotScore: 36, position: "Net-Short", seasonality: "Neutral (Saisonal)" }
+            "CL=F": { name: "Rohöl (Crude Oil)", cotScore: 54, position: "Net-Long", seasonality: "Bullisch (Sommer-Saison)", structure: "Backwardation", weather: "Neutral" },
+            "NG=F": { name: "Erdgas (Nat Gas)", cotScore: 76, position: "Net-Long", seasonality: "Neutral", structure: "Contango", weather: "Bullisch (US-Hitzewelle)" },
+            "GC=F": { name: "Gold", cotScore: 41, position: "Net-Short", seasonality: "Bärisch (Sommer-Tief)", structure: "Contango (Normal)", weather: "Kein Einfluss" },
+            "ZW=F": { name: "Weizen (Wheat)", cotScore: 49, position: "Neutral", seasonality: "Bärisch (Ernte-Druck)", structure: "Contango", weather: "Bärisch (Guter Regen)" },
+            "ZC=F": { name: "Mais (Corn)", cotScore: 51, position: "Neutral", seasonality: "Bärisch (Ernte-Druck)", structure: "Contango", weather: "Neutral" },
+            "KC=F": { name: "Kaffee (Coffee)", cotScore: 73, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation", weather: "Bullisch" },
+            "CC=F": { name: "Kakao (Cocoa)", cotScore: 36, position: "Net-Short", seasonality: "Neutral (Saisonal)", structure: "Backwardation", weather: "Bullisch" }
         };
 
-        // Falls deine Github Actions Skripte Daten reinschreiben, nutzen wir sie. Ansonsten greift das Default-Objekt.
+        // COT_DATA_PLACEHOLDER
         window.cotData = Object.assign({}, defaultMetaData, window.cotData || {});
 
         const tickers = Object.keys(window.cotData);
@@ -171,7 +178,6 @@
             const timeoutId = setTimeout(() => controller.abort(), 1800);
 
             try {
-                // AllOrigins CORS Proxy umgehen via direktem query2 Mirror mit No-Cache String
                 const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + ticker + '?range=1d&interval=1m&_nocache=' + Date.now())}`, { signal: controller.signal });
                 const wrapper = await response.json();
                 const data = JSON.parse(wrapper.contents);
@@ -181,9 +187,7 @@
                     let price = data.chart.result[0].meta.regularMarketPrice;
                     let currency = data.chart.result[0].meta.currency || "USD";
                     
-                    // USX / Cents Erkennung und automatische Konvertierung in lesbare Kontraktwerte
                     if (currency === "GBp" || currency === "USX" || (ticker === "CC=F" && price < 1000)) {
-                        // Wenn Kakao als "341" kommt, sind das meist Cents -> Umrechnung in Standarddarstellung
                         if(ticker === "CC=F" && price < 1000) price = price * 25; 
                         currency = "USD";
                     }
@@ -194,7 +198,6 @@
                 }
             } catch (error) {
                 clearTimeout(timeoutId);
-                // Sofort-Sicherungssystem greift bei Blockade oder Zeitüberschreitung
                 const fPrice = fallbackPrices[ticker];
                 document.getElementById('comm-price').innerText = fPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " USD";
             }
@@ -203,17 +206,32 @@
         function updateUI() {
             const ticker = tickers[currentIndex];
             const data = window.cotData[ticker];
+            const meta = defaultMetaData[ticker];
 
-            document.getElementById('comm-name').innerText = data.name || defaultMetaData[ticker].name;
-            document.getElementById('cot-score').innerText = (data.cotScore || defaultMetaData[ticker].cotScore) + "/100";
-            document.getElementById('cot-pos').innerText = data.position || defaultMetaData[ticker].position;
+            document.getElementById('comm-name').innerText = data.name || meta.name;
+            document.getElementById('cot-score').innerText = (data.cotScore !== undefined ? data.cotScore : meta.cotScore) + "/100";
+            document.getElementById('cot-pos').innerText = data.position || meta.position;
             document.getElementById('comm-price').innerText = "Lädt...";
+            document.getElementById('cot-season').innerText = data.seasonality || data.season || meta.seasonality;
             
-            // Verhindert das Verschwinden der Saisonalität, falls das Python-Skript das Feld mal auslässt
-            document.getElementById('cot-season').innerText = data.seasonality || data.season || defaultMetaData[ticker].seasonality;
+            const currentStructure = data.structure || meta.structure;
+            const currentWeather = data.weather || meta.weather;
+            
+            document.getElementById('term-structure').innerText = currentStructure;
+            document.getElementById('weather-impact').innerText = currentWeather;
+
+            const structEl = document.getElementById('term-structure');
+            if (currentStructure.includes("Backwardation")) { structEl.style.color = "#34d399"; }
+            else if (currentStructure.includes("Contango")) { structEl.style.color = "#94a3b8"; }
+            else { structEl.style.color = "#f3f4f6"; }
+
+            const weatherEl = document.getElementById('weather-impact');
+            if (currentWeather.includes("Bullisch")) { weatherEl.style.color = "#f87171"; }
+            else if (currentWeather.includes("Bärisch")) { weatherEl.style.color = "#34d399"; }
+            else { weatherEl.style.color = "#94a3b8"; }
 
             const posEl = document.getElementById('cot-pos');
-            const currentPos = data.position || defaultMetaData[ticker].position;
+            const currentPos = data.position || meta.position;
             if (currentPos === "Net-Long") { posEl.style.color = "#34d399"; }
             else if (currentPos === "Net-Short") { posEl.style.color = "#f87171"; }
             else { posEl.style.color = "#94a3b8"; }
