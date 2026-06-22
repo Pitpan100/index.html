@@ -15,7 +15,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Inject Dynamic Matrix
+      - name: Inject Dynamic Matrix with Seasonality
         run: |
           node - << 'EOF'
           const fs = require('fs');
@@ -25,18 +25,18 @@ jobs:
           const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
           const newDatabase = `window.cotData = {
-              "CL=F": { name: "Rohöl (Crude Oil)", cotScore: ${rand(52, 64)}, position: "Net-Long" },
-              "NG=F": { name: "Erdgas (Nat Gas)", cotScore: ${rand(72, 85)}, position: "Net-Long" },
-              "GC=F": { name: "Gold", cotScore: ${rand(38, 46)}, position: "Net-Short" },
-              "W=F": { name: "Weizen (Wheat)", cotScore: ${rand(45, 55)}, position: "Neutral" },
-              "C=F": { name: "Mais (Corn)", cotScore: ${rand(48, 56)}, position: "Neutral" },
-              "KC=F": { name: "Kaffee (Coffee)", cotScore: ${rand(68, 78)}, position: "Net-Long" },
-              "CC=F": { name: "Kakao (Cocoa)", cotScore: ${rand(28, 36)}, position: "Net-Short" }
+              "CL=F": { name: "Rohöl (Crude Oil)", cotScore: ${rand(52, 64)}, position: "Net-Long", seasonality: "Bullisch (Sommer-Saison)" },
+              "NG=F": { name: "Erdgas (Nat Gas)", cotScore: ${rand(72, 85)}, position: "Net-Long", seasonality: "Neutral" },
+              "GC=F": { name: "Gold", cotScore: ${rand(38, 46)}, position: "Net-Short", seasonality: "Bärisch (Sommer-Tief)" },
+              "W=F": { name: "Weizen (Wheat)", cotScore: ${rand(45, 55)}, position: "Neutral", seasonality: "Bärisch (Ernte-Druck)" },
+              "C=F": { name: "Mais (Corn)", cotScore: ${rand(48, 56)}, position: "Neutral", seasonality: "Bärisch (Ernte-Druck)" },
+              "KC=F": { name: "Kaffee (Coffee)", cotScore: ${rand(68, 78)}, position: "Net-Long", seasonality: "Bullisch" },
+              "CC=F": { name: "Kakao (Cocoa)", cotScore: ${rand(28, 36)}, position: "Net-Short", seasonality: "Neutral" }
           };`;
 
           html = html.replace(/window\.cotData = \{[\s\S]*?\};/, newDatabase);
           fs.writeFileSync('index.html', html, 'utf8');
-          console.log("Matrix erfolgreich generiert.");
+          console.log("Saisonalitäts-Matrix erfolgreich injiziert.");
           EOF
 
       - name: Commit & Push Changes
@@ -44,5 +44,5 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git commit -m "🤖 Autopilot Update erfolgreich" || exit 0
+          git commit -m "🤖 COT Saisonalitäts-Update erfolgreich" || exit 0
           git push
