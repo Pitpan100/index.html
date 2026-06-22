@@ -1,48 +1,36 @@
-name: Automated COT Data Updater
+name: Automated Commodity Intelligence Updater
 
 on:
   schedule:
-    - cron: '0 2 * * 6'
-  workflow_dispatch: 
-
-permissions:
-  contents: write
+    # Jeden Samstagmorgen um 06:00 Uhr UTC (CFTC veröffentlicht immer Freitagabend)
+    - cron: '0 6 * * 6'
+  workflow_dispatch: # Ermöglicht es dir, das Update jederzeit manuell zu starten
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
-      - name: Inject Dynamic Matrix with Seasonality
-        run: |
-          node - << 'EOF'
-          const fs = require('fs');
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-node-version: '3.10'
+        cache: 'pip'
 
-          let html = fs.readFileSync('index.html', 'utf8');
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pandas numpy
 
-          const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    - name: Run COT Updater Script
+      run: python update_cot.py
 
-          const newDatabase = `window.cotData = {
-              "CL=F": { name: "Rohöl (Crude Oil)", cotScore: ${rand(52, 64)}, position: "Net-Long", seasonality: "Bullisch (Sommer-Saison)" },
-              "NG=F": { name: "Erdgas (Nat Gas)", cotScore: ${rand(72, 85)}, position: "Net-Long", seasonality: "Neutral" },
-              "GC=F": { name: "Gold", cotScore: ${rand(38, 46)}, position: "Net-Short", seasonality: "Bärisch (Sommer-Tief)" },
-              "W=F": { name: "Weizen (Wheat)", cotScore: ${rand(45, 55)}, position: "Neutral", seasonality: "Bärisch (Ernte-Druck)" },
-              "C=F": { name: "Mais (Corn)", cotScore: ${rand(48, 56)}, position: "Neutral", seasonality: "Bärisch (Ernte-Druck)" },
-              "KC=F": { name: "Kaffee (Coffee)", cotScore: ${rand(68, 78)}, position: "Net-Long", seasonality: "Bullisch" },
-              "CC=F": { name: "Kakao (Cocoa)", cotScore: ${rand(28, 36)}, position: "Net-Short", seasonality: "Neutral" }
-          };`;
-
-          html = html.replace(/window\.cotData = \{[\s\S]*?\};/, newDatabase);
-          fs.writeFileSync('index.html', html, 'utf8');
-          console.log("Saisonalitäts-Matrix erfolgreich injiziert.");
-          EOF
-
-      - name: Commit & Push Changes
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add index.html
-          git commit -m "🤖 COT Saisonalitäts-Update erfolgreich" || exit 0
-          git push
+    - name: Commit and Push Changes
+      run: |
+        git config --global user.name "GitHub Action Autopilot"
+        git config --global user.email "actions@github.com"
+        git add index.html
+        git commit -m "Autopilot: Echtzeit COT-Daten & Terminstrukturen aktualisiert" || echo "Keine Änderungen vorhanden"
+        git push
