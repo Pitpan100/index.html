@@ -144,7 +144,6 @@
     </div>
 
     <script>
-        // Start-Datenbank: Wird vom Autopiloten jede Woche überschrieben
         window.cotData = {
             "CL=F": { name: "Rohöl (Crude Oil)", cotScore: 54, position: "Net-Long", seasonality: "Bullisch (Sommer-Saison)" },
             "NG=F": { name: "Erdgas (Nat Gas)", cotScore: 76, position: "Net-Long", seasonality: "Neutral" },
@@ -160,14 +159,29 @@
 
         async function fetchPrice(ticker) {
             try {
-                // Cache-Buster verhindert alte, hängengebliebene Kurse im Browser
-                const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?nocache=${Date.now()}`);
+                // Optimierte URL mit festem Intervall und Range, um Abwürfe bei Gold-Futures zu verhindern
+                const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=1d&interval=1m&nocache=${Date.now()}`);
                 const data = await response.json();
-                const price = data.chart.result[0].meta.regularMarketPrice;
-                const currency = data.chart.result[0].meta.currency || "USD";
-                document.getElementById('comm-price').innerText = price.toFixed(2) + " " + currency;
+                
+                if (data && data.chart && data.chart.result && data.chart.result[0]) {
+                    const meta = data.chart.result[0].meta;
+                    const price = meta.regularMarketPrice;
+                    const currency = meta.currency || "USD";
+                    document.getElementById('comm-price').innerText = price.toFixed(2) + " " + currency;
+                } else {
+                    throw new Error("Unerwartete API-Struktur");
+                }
             } catch (error) {
-                document.getElementById('comm-price').innerText = "Kurs-Fehler";
+                console.error("Fehler bei Haupt-API, versuche Fallback...", error);
+                // Robuster Zweit-Pfad (v7 API), falls v8 temporär blockiert
+                try {
+                    const response = await fetch(`https://query1.finance.yahoo.com/v7/finance/options/${ticker}`);
+                    const data = await response.json();
+                    const price = data.optionChain.result[0].quote.regularMarketPrice;
+                    document.getElementById('comm-price').innerText = price.toFixed(2) + " USD";
+                } catch (fallbackError) {
+                    document.getElementById('comm-price').innerText = "Kurs-Fehler";
+                }
             }
         }
 
@@ -178,6 +192,7 @@
             document.getElementById('comm-name').innerText = data.name;
             document.getElementById('cot-score').innerText = data.cotScore + "/100";
             document.getElementById('cot-pos').innerText = data.position;
+            document.getElementById('comm-price').innerText = "Läuft...";
             document.getElementById('cot-season').innerText = data.seasonality || "Neutral";
 
             const posEl = document.getElementById('cot-pos');
