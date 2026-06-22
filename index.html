@@ -1,0 +1,330 @@
+<?php
+/**
+ * Commodity Intelligence Hub - Voll ausführbare PHP/JS-Anwendung
+ * Kontext-Jahr: 2026
+ */
+
+// 1. Datenmodell und Business-Logik (Simulation einer API/Datenbank)
+$commodityData = [
+    'wheat' => [
+        'name' => 'Wheat (Weizen)',
+        'termStructure' => 'Backwardation',
+        'score' => 78,
+        'cot' => 'Net-Long (Commercials kaufen massiv)',
+        'season' => 'Bullisch (Saisonale Frühjahrsknappheit)',
+        'stocks' => 'Kritisch Niedrig (Globale Endbestände rückläufig)',
+        'weatherTitle' => 'Dürregefahr',
+        'weatherText' => 'Anhaltende Trockenheit in den US Southern Plains bedroht die Winterweizen-Ernte. Schlechte Bedingungen im Schwarzmeerraum.',
+        'politicsTitle' => 'Exportbeschränkungen',
+        'politicsText' => 'Russland droht mit Verschärfung der Exportquoten zur Sicherung des Binnenmarktes. Protektionistische Tendenzen in Nordafrika.'
+    ],
+    'corn' => [
+        'name' => 'Corn (Mais)',
+        'termStructure' => 'Contango',
+        'score' => 42,
+        'cot' => 'Neutral bis Leicht Short',
+        'season' => 'Bärisch (Aussaat-Druck in den USA)',
+        'stocks' => 'Hoch (Rekordernte in Südamerika)',
+        'weatherTitle' => 'Optimal',
+        'weatherText' => 'Ideale Regenmengen im Corn Belt der USA sorgen für optimalen Start der Aussaat-Saison. Keine Hitzestress-Signale.',
+        'politicsTitle' => 'Biofuel-Debatte',
+        'politicsText' => 'Neue EU-Richtlinien zur Beimischung von Biokraftstoffen reduzieren den industriellen Bedarf an Futtermais leicht.'
+    ],
+    'crude_oil' => [
+        'name' => 'Crude Oil (Rohöl)',
+        'termStructure' => 'Backwardation',
+        'score' => 85,
+        'cot' => 'Stark Long (Managed Money akkumuliert)',
+        'season' => 'Bullisch (Beginnende US Driving Season)',
+        'stocks' => 'Abnehmend (Unter 5-Jahres-Schnitt)',
+        'weatherTitle' => 'Hurrikan-Risiko',
+        'weatherText' => 'Frühe Indikatoren deuten auf eine überdurchschnittlich aktive Hurrikan-Saison im Golf von Mexiko hin, die Raffinerien bedroht.',
+        'politicsTitle' => 'OPEC+ Konflikte',
+        'politicsText' => 'Verschärfte Sanktionen gegen Ölexporteure im Nahen Osten und strikte Einhaltung der OPEC+-Förderkürzungen verknappen das Angebot.'
+    ],
+    'natural_gas' => [
+        'name' => 'Natural Gas (Erdgas)',
+        'termStructure' => 'Contango',
+        'score' => 31,
+        'cot' => 'Extrem Net-Short',
+        'season' => 'Neutral (Schultermonat)',
+        'stocks' => 'Maximal Gefüllt (Lager voll nach mildem Winter)',
+        'weatherTitle' => 'Milde Temperaturen',
+        'weatherText' => 'Keine extremen Hitzewellen prognostiziert, dadurch bleibt der Strombedarf für Klimaanlagen im Rahmen.',
+        'politicsTitle' => 'LNG-Infrastruktur',
+        'politicsText' => 'Neue Export-Terminals an der US-Golfküste verzögern sich aufgrund regulatorischer Umweltauflagen der Administration.'
+    ],
+    'coffee' => [
+        'name' => 'Coffee (Kaffee)',
+        'termStructure' => 'Backwardation',
+        'score' => 92,
+        'cot' => 'Rekord Net-Long',
+        'season' => 'Extrem Bullisch',
+        'stocks' => 'Historisches Tief (Zertifizierte Bestände leer)',
+        'weatherTitle' => 'El Niño Schäden',
+        'weatherText' => 'Anhaltende Hitze und ausbleibende Niederschläge in Vietnam (Robusta) und Brasilien (Arabica) führen zu massiven Ernteausfällen.',
+        'politicsTitle' => 'EUDR Regulierung',
+        'politicsText' => 'Die Durchsetzung der EU-Entwaldungsrichtlinie (EUDR) führt zu logistischen Engpässen und Lieferstopps von nicht-zertifiziertem Kaffee.'
+    ],
+    'cocoa' => [
+        'name' => 'Cocoa (Kakao)',
+        'termStructure' => 'Starke Backwardation',
+        'score' => 95,
+        'cot' => 'Commercial Hedging am Limit',
+        'season' => 'Bullisch',
+        'stocks' => 'Alarmierend Niedrig (Defizit im 4. Jahr in Folge)',
+        'weatherTitle' => 'Harmattan-Winde',
+        'weatherText' => 'Extreme Trockenheit und heftige staubige Winde in der Elfenbeinküste und Ghana zerstören die Blütenansätze der Zwischenernte.',
+        'politicsTitle' => 'Preiskontrollen',
+        'politicsText' => 'Die staatlichen Vermarktungsboards in Westafrika passen die Erzeugerpreise zu spät an, was den Schmuggel in Nachbarländer massiv anheizt.'
+    ]
+];
+
+// PHP-Hilfsfunktion zur Konvertierung in JSON für das Frontend-Skript
+$jsonData = json_encode($commodityData);
+?>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commodity Intelligence Hub (2026)</title>
+    <!-- Tailwind CSS CDN für das Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome für Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-900 text-gray-100 font-sans min-h-screen">
+
+    <!-- Navbar -->
+    <nav class="border-b border-gray-800 bg-gray-950 p-5 shadow-lg">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
+                    <i class="fa-solid fa-chart-line text-emerald-400 text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight text-white">Commodity Intelligence Hub</h1>
+                    <p class="text-xs text-gray-400">Terminstrukturen, Wetter, Politik & Confluence-Integration</p>
+                </div>
+            </div>
+            <div class="bg-gray-900 px-4 py-2 rounded-lg border border-gray-800 text-sm">
+                <span class="text-gray-500">Live-Node-Status:</span> <span class="text-emerald-400 font-semibold">Online (2026)</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto p-4 md:p-6 space-y-6">
+        
+        <!-- Rohstoff Selektion Tabs über PHP generiert -->
+        <div class="bg-gray-950 p-2 rounded-xl border border-gray-800 flex flex-wrap gap-2 shadow-inner">
+            <?php 
+            $isActive = true;
+            foreach ($commodityData as $key => $asset): 
+                $shortName = explode(' ', $asset['name'])[0];
+            ?>
+                <button 
+                    id="tab-<?php echo $key; ?>" 
+                    onclick="selectAsset('<?php echo $key; ?>')"
+                    class="flex-1 min-w-[120px] text-center font-bold py-2.5 px-4 rounded-lg transition duration-200 text-sm <?php echo $isActive ? 'bg-emerald-500 text-gray-950 shadow' : 'text-gray-400 hover:bg-gray-900 hover:text-white'; ?>">
+                    <?php echo $shortName; ?>
+                </button>
+            <?php 
+                $isActive = false;
+            endforeach; 
+            ?>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Linke Spalte: Scoring & COT -->
+            <div class="space-y-6 lg:col-span-1">
+                <div class="bg-gray-950 p-6 rounded-xl border border-gray-800 shadow-md">
+                    <div class="flex justify-between items-start mb-4">
+                        <h2 id="ui-asset-name" class="text-2xl font-black text-white">--</h2>
+                        <span id="ui-term-badge" class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">--</span>
+                    </div>
+                    <div class="border-t border-gray-800 my-4 pt-4">
+                        <div class="text-gray-400 text-sm mb-1">Gesamtmarkt-Score</div>
+                        <div class="flex items-baseline gap-2">
+                            <span id="ui-market-score" class="text-5xl font-extrabold">--</span>
+                            <span class="text-gray-500 text-sm">/ 100</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gray-950 p-6 rounded-xl border border-gray-800 shadow-md space-y-4">
+                    <h3 class="text-md font-bold border-b border-gray-800 pb-2 text-emerald-400 flex items-center gap-2">
+                        <i class="fa-solid fa-scale-balanced"></i> Markt-Strukturdaten
+                    </h3>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="text-xs text-gray-500 font-bold uppercase">Terminstruktur</div>
+                            <div id="ui-info-term" class="text-sm font-semibold text-gray-200">--</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500 font-bold uppercase">COT Report Bias</div>
+                            <div id="ui-info-cot" class="text-sm font-semibold text-gray-200">--</div>
+                        </div>
+                        <div>
+                            <div class="text-xs text-gray-500 font-bold uppercase">Saisonalität</div>
+                            <div id="ui-info-season" class="text-sm font-semibold text-gray-200">--</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rechte Spalte: Fundamentaldaten & Analysen -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-gray-950 p-6 rounded-xl border border-gray-800 shadow-md">
+                    <h3 class="text-md font-bold mb-4 flex items-center gap-2 text-amber-400">
+                        <i class="fa-solid fa-warehouse"></i> Fundamentaldaten & Makro-Lage
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
+                            <div class="text-xs text-gray-500 uppercase font-bold mb-1">Lagerbestände</div>
+                            <div id="ui-info-stocks" class="text-sm font-bold text-gray-200">--</div>
+                        </div>
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
+                            <div class="text-xs text-gray-500 uppercase font-bold mb-1">Wetter-Status</div>
+                            <div id="ui-info-weather-title" class="text-sm font-bold text-gray-200">--</div>
+                        </div>
+                        <div class="bg-gray-900 p-4 rounded-lg border border-gray-800">
+                            <div class="text-xs text-gray-500 uppercase font-bold mb-1">Geopolitik / Politik</div>
+                            <div id="ui-info-politics-title" class="text-sm font-bold text-gray-200">--</div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="p-4 bg-gray-900 rounded-lg border-l-4 border-sky-500">
+                            <h4 class="text-xs font-bold text-sky-400 uppercase tracking-wider mb-1">Wetteranalyse</h4>
+                            <p id="ui-info-weather-text" class="text-sm text-gray-300 leading-relaxed">--</p>
+                        </div>
+                        <div class="p-4 bg-gray-900 rounded-lg border-l-4 border-purple-500">
+                            <h4 class="text-xs font-bold text-purple-400 uppercase tracking-wider mb-1">Politische Faktoren</h4>
+                            <p id="ui-info-politics-text" class="text-sm text-gray-300 leading-relaxed">--</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Confluence Integration Panel -->
+        <div class="bg-gray-950 p-6 rounded-xl border border-gray-800 shadow-md">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+                <div>
+                    <h3 class="text-md font-bold text-blue-400 flex items-center gap-2">
+                        <i class="fa-brands fa-confluence"></i> Confluence Native Export
+                    </h3>
+                    <p class="text-xs text-gray-400">Nutzt das native Confluence-Format. Einfach kopieren und direkt im Editor einfügen.</p>
+                </div>
+                <button onclick="copyToConfluence()" class="bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition duration-250 shadow-lg">
+                    <i class="fa-solid fa-copy"></i> In Zwischenablage kopieren
+                </button>
+            </div>
+            <textarea id="ui-confluence-markup" readonly class="w-full h-32 bg-gray-900 border border-gray-800 rounded-lg p-3 text-xs font-mono text-gray-400 focus:outline-none focus:border-blue-500 select-all"></textarea>
+        </div>
+
+    </main>
+
+    <!-- JavaScript-Logik für Interaktivität und Datentransfer aus PHP -->
+    <script>
+        // Daten aus PHP-Array in JavaScript-Objekt injecten
+        const appData = <?php echo $jsonData; ?>;
+
+        function selectAsset(key) {
+            // 1. Tab-Zustände visuell anpassen
+            Object.keys(appData).forEach(k => {
+                const tab = document.getElementById(`tab-${k}`);
+                if (k === key) {
+                    tab.className = "flex-1 min-w-[120px] text-center font-bold py-2.5 px-4 rounded-lg transition duration-200 text-sm bg-emerald-500 text-gray-950 shadow";
+                } else {
+                    tab.className = "flex-1 min-w-[120px] text-center font-bold py-2.5 px-4 rounded-lg transition duration-200 text-sm text-gray-400 hover:bg-gray-900 hover:text-white";
+                }
+            });
+
+            const asset = appData[key];
+
+            // 2. UI-Felder manipulieren
+            document.getElementById('ui-asset-name').innerText = asset.name;
+            document.getElementById('ui-market-score').innerText = asset.score;
+            
+            // Score-Färbung und Term-Badge anpassen
+            const scoreElement = document.getElementById('ui-market-score');
+            const badge = document.getElementById('ui-term-badge');
+            badge.innerText = asset.termStructure;
+            
+            if (asset.termStructure.includes("Backwardation")) {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-rose-500/20 text-rose-400 border border-rose-500/30";
+                scoreElement.className = "text-5xl font-extrabold text-rose-400";
+            } else {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-sky-500/20 text-sky-400 border border-sky-500/30";
+                scoreElement.className = "text-5xl font-extrabold text-sky-400";
+            }
+
+            // Stammdaten befüllen
+            document.getElementById('ui-info-term').innerText = asset.termStructure;
+            document.getElementById('ui-info-cot').innerText = asset.cot;
+            document.getElementById('ui-info-season').innerText = asset.season;
+            document.getElementById('ui-info-stocks').innerText = asset.stocks;
+            document.getElementById('ui-info-weather-title').innerText = asset.weatherTitle;
+            document.getElementById('ui-info-weather-text').innerText = asset.weatherText;
+            document.getElementById('ui-info-politics-title').innerText = asset.politicsTitle;
+            document.getElementById('ui-info-politics-text').innerText = asset.politicsText;
+
+            // 3. Confluence Tabellen-Markup generieren
+            buildConfluenceFormat(asset);
+        }
+
+        function buildConfluenceFormat(asset) {
+            const markup = `<table>
+  <thead>
+    <tr>
+      <th colspan="2">📊 COMMODITY REPORT: ${asset.name.toUpperCase()}</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Gesamt-Market-Score:</strong></td>
+      <td>${asset.score} / 100 Punkte</td>
+    </tr>
+    <tr>
+      <td><strong>Terminstruktur & COT-Daten:</strong></td>
+      <td>${asset.termStructure} | ${asset.cot}</td>
+    </tr>
+    <tr>
+      <td><strong>Lagerbestände & Saisonalität:</strong></td>
+      <td>${asset.stocks} (${asset.season})</td>
+    </tr>
+    <tr>
+      <td><strong>Wetter-Lage:</strong></td>
+      <td><strong>${asset.weatherTitle}:</strong> ${asset.weatherText}</td>
+    </tr>
+    <tr>
+      <td><strong>Politische Risiken:</strong></td>
+      <td><strong>${asset.politicsTitle}:</strong> ${asset.politicsText}</td>
+    </tr>
+  </tbody>
+</table>`;
+            document.getElementById('ui-confluence-markup').value = markup;
+        }
+
+        function copyToConfluence() {
+            const area = document.getElementById('ui-confluence-markup');
+            area.select();
+            document.execCommand('copy');
+            
+            // Visuelles Feedback
+            alert('Kopiert! Du kannst die Tabelle jetzt direkt mit Strg+V / Cmd+V in jede Confluence-Seite einfügen.');
+        }
+
+        // App-Initialisierung mit Weizen beim Laden der Seite
+        document.addEventListener("DOMContentLoaded", () => {
+            selectAsset('wheat');
+        });
+    </script>
+</body>
+</html>
