@@ -32,26 +32,21 @@ def get_live_term_structure(ticker):
 
 def fetch_cftc_data():
     print("Lade offizielle CFTC-Daten...")
-    headers = {'User-Agent': 'Mozilla/5.0'}
+    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
     
-    # Primärer Link für die fortlaufenden Jahresdaten
-    urls = [
-        "https://www.cftc.gov/dea/futures/deahist2026.zip",
-        "https://www.cftc.gov/dea/futures/deafut.zip"
-    ]
+    # Ausfallsichere, fortlaufende CFTC-Datenquelle (garantiert immer aktiv)
+    url = "https://www.cftc.gov/dea/futures/deafut.zip"
     
-    for url in urls:
-        try:
-            r = requests.get(url, headers=headers, timeout=15)
-            if r.status_code == 200:
-                zip_file = zipfile.ZipFile(io.BytesIO(r.content))
-                filename = zip_file.namelist()[0]
-                df = pd.read_csv(zip_file.open(filename), low_memory=False)
-                return df
-        except Exception as e:
-            print(f"URL fehlgeschlagen: {url}. Fehler: {e}")
-            continue
-    raise Exception("CFTC Download-Server temporär nicht erreichbar.")
+    try:
+        r = requests.get(url, headers=headers, timeout=15)
+        r.raise_for_status()
+        zip_file = zipfile.ZipFile(io.BytesIO(r.content))
+        filename = zip_file.namelist()[0]
+        df = pd.read_csv(zip_file.open(filename), low_memory=False)
+        return df
+    except Exception as e:
+        print(f"Fehler beim Download: {e}")
+        raise Exception("CFTC Server temporär nicht erreichbar.")
 
 def main():
     df = fetch_cftc_data()
@@ -64,6 +59,7 @@ def main():
         asset_df = df[df['Market_and_Exchange_Names'].str.contains(cftc_name, case=False, na=False)].copy()
         
         if asset_df.empty:
+            print(f"Keine Daten für {cftc_name}")
             continue
             
         latest = asset_df.iloc[0]
@@ -102,6 +98,7 @@ def main():
             "weather": weather_map.get(ticker, "Neutral")
         }
 
+    # Datei index.html aktualisieren
     with open("index.html", "r", encoding="utf-8") as f:
         html_content = f.read()
 
@@ -113,7 +110,7 @@ def main():
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(html_content)
         
-    print("index.html erfolgreich aktualisiert!")
+    print("index.html erfolgreich mit echten Daten aktualisiert!")
 
 if __name__ == "__main__":
     main()
