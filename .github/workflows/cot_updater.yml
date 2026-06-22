@@ -1,0 +1,81 @@
+name: Automated COT Data Updater
+
+on:
+  schedule:
+    # Läuft jeden Samstagmorgen um 02:00 Uhr nachts (nachdem die CFTC Freitagabend veröffentlicht hat)
+    - cron: '0 2 * * 6'
+  workflow_dispatch: # Erlaubt es dir, den Scan jederzeit manuell per Knopfdruck zu starten
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Dependencies
+        run: pip install pandas requests
+
+      - name: Fetch and Parse Official CFTC COT Report
+        run: |
+          python - <<EOF
+          import pandas as pd
+          import requests
+          import zipfile
+          import io
+          import re
+
+          # 1. Download des aktuellen komprimierten Jahresberichts der CFTC
+          url = "https://www.cftc.gov/files/dea/history/deahist2026.zip"
+          r = requests.get(url)
+          z = zipfile.ZipFile(io.BytesIO(r.content))
+          
+          # Entpacken und in Dataframe laden
+          df = pd.read_csv(z.open(z.namelist()[0]))
+          
+          # Filter auf relevante Rohstoffe (Legacy Report Format)
+          # Wir extrahieren die Netto-Positionen der Commercials
+          gold = df[df['Market_and_Market_Exchange'].str.contains("GOLD - COMMODITY EXCHANGE INC.", na=False)].iloc[0]
+          oil = df[df['Market_and_Market_Exchange'].str.contains("CRUDE OIL, LIGHT SWEET - NEW YORK MERCANTILE EXCHANGE", na=False)].iloc[0]
+          gas = df[df['Market_and_Market_Exchange'].str.contains("NATURAL GAS - NEW YORK MERCANTILE EXCHANGE", na=False)].iloc[0]
+
+          def calculate_score(longs, shorts):
+              total = longs + shorts
+              if total == 0: return 50
+              return int((longs / total) * 100)
+
+          # Berechnung der realen Scores basierend auf Long vs Short Verhältnis
+          gold_score = calculate_score(gold['Comm_Positions_Long_All'], gold['Comm_Positions_Short_All'])
+          oil_score = calculate_score(oil['Comm_Positions_Long_All'], oil['Comm_Positions_Short_All'])
+          gas_score = calculate_score(gas['Comm_Positions_Long_All'], gas['Comm_Positions_Short_All'])
+
+          # 2. index.html einlesen und den JS-Datenblock im Quellcode austauschen
+          with open("index.html", "r", encoding="utf-8") as f:
+              html = f.read()
+
+          new_database = f"""window.cotData = {{
+              "CL=F": {{ name: "Rohöl", cotScore: {oil_score}, position: "{'Net-Long' if oil_score > 50 else 'Net-Short'}" }},
+              "GC=F": {{ name: "Gold", cotScore: {gold_score}, position: "{'Net-Long' if gold_score > 50 else 'Net-Short'}" }},
+              "NG=F": {{ name: "Erdgas", cotScore: {gas_score}, position: "{'Net-Long' if gas_score > 50 else 'Net-Short'}" }}
+          }};"""
+
+          # Ersetze das alte Objekt via Regulärem Ausdruck
+          html_updated = re.sub(r'window\.cotData = \{.*?\};', new_database, html, flags=re.DOTALL)
+
+          with open("index.html", "w", encoding="utf-8") as f:
+              f.write(html_updated)
+          print("HTML-Daten erfolgreich mit echten Regierungsdaten überschrieben!")
+          EOF
+
+      - name: Commit & Push Changes back to GitHub Pages
+        run: |
+          git config --global user.name "COT-Bot"
+          git config --global user.email "bot@github.com"
+          git add index.html
+          git commit -m "🤖 Automatisiertes COT-Update von US-Regierung eingepflegt" || exit 0
+          git push
