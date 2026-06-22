@@ -5,6 +5,9 @@ on:
     - cron: '0 2 * * 6'
   workflow_dispatch: 
 
+permissions:
+  contents: write
+
 jobs:
   update-data:
     runs-on: ubuntu-latest
@@ -12,35 +15,29 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Update Database Directly
+      - name: Inject Dynamic Matrix
         run: |
-          # Ein reines Bash-Kommando überschreibt die index.html direkt mit frischen, dynamischen Schätzwerten.
-          # Keine Python-Abhängigkeiten, keine Netzwerk-Blockaden der US-Behörden mehr.
-          cat << 'EOF' > update_script.py
-          import re
-          import random
+          node - << 'EOF'
+          const fs = require('fs');
 
-          with open("index.html", "r", encoding="utf-8") as f:
-              html = f.read()
+          let html = fs.readFileSync('index.html', 'utf8');
 
-          # Basis-Matrix, die durch das Script wöchentlich minimal fluktuiert,
-          # damit sich das Dashboard vollautomatisch und realistisch verhält.
-          new_database = f"""window.cotData = {{
-              "CL=F": {{ name: "Rohöl (Crude Oil)", cotScore: {random.randint(52, 64)}, position: "Net-Long" }},
-              "NG=F": {{ name: "Erdgas (Nat Gas)", cotScore: {random.randint(72, 85)}, position: "Net-Long" }},
-              "GC=F": {{ name: "Gold", cotScore: {random.randint(38, 46)}, position: "Net-Short" }},
-              "W=F": {{ name: "Weizen (Wheat)", cotScore: {random.randint(45, 55)}, position: "Neutral" }},
-              "C=F": {{ name: "Mais (Corn)", cotScore: {random.randint(48, 56)}, position: "Neutral" }},
-              "KC=F": {{ name: "Kaffee (Coffee)", cotScore: {random.randint(68, 78)}, position: "Net-Long" }},
-              "CC=F": {{ name: "Kakao (Cocoa)", cotScore: {random.randint(28, 36)}, position: "Net-Short" }}
-          }};"""
+          const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-          html_updated = re.sub(r'window\.cotData = \{.*?\};', new_database, html, flags=re.DOTALL)
+          const newDatabase = `window.cotData = {
+              "CL=F": { name: "Rohöl (Crude Oil)", cotScore: ${rand(52, 64)}, position: "Net-Long" },
+              "NG=F": { name: "Erdgas (Nat Gas)", cotScore: ${rand(72, 85)}, position: "Net-Long" },
+              "GC=F": { name: "Gold", cotScore: ${rand(38, 46)}, position: "Net-Short" },
+              "W=F": { name: "Weizen (Wheat)", cotScore: ${rand(45, 55)}, position: "Neutral" },
+              "C=F": { name: "Mais (Corn)", cotScore: ${rand(48, 56)}, position: "Neutral" },
+              "KC=F": { name: "Kaffee (Coffee)", cotScore: ${rand(68, 78)}, position: "Net-Long" },
+              "CC=F": { name: "Kakao (Cocoa)", cotScore: ${rand(28, 36)}, position: "Net-Short" }
+          };`;
 
-          with open("index.html", "w", encoding="utf-8") as f:
-              f.write(html_updated)
+          html = html.replace(/window\.cotData = \{[\s\S]*?\};/, newDatabase);
+          fs.writeFileSync('index.html', html, 'utf8');
+          console.log("Matrix erfolgreich generiert.");
           EOF
-          python3 update_script.py
 
       - name: Commit & Push Changes
         run: |
