@@ -9,7 +9,7 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #0b0f19; color: #f3f4f6; margin: 0; padding: 16px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; width: 100%; max-width: 380px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
         
-        /* Extremwert-Ticker-Band */
+        /* Ticker-Band */
         .ticker-wrap { background: #020617; border: 1px solid #ef4444; border-radius: 8px; padding: 6px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; font-size: 11px; font-weight: bold; color: #f87171; display: none; cursor: pointer; position: relative; width: 100%; height: 27px; }
         .ticker { display: inline-block; position: absolute; white-space: nowrap; will-change: transform; left: 0; top: 50%; transform: translateY(-50%); }
 
@@ -17,7 +17,7 @@
         .header h1 { font-size: 19px; font-weight: 800; color: #fbbf24; margin: 0 0 4px 0; }
         .header p { font-size: 11px; color: #94a3b8; margin: 0; }
         
-        /* Dropdown-Container */
+        /* Dropdown */
         .select-container { 
             margin-bottom: 16px; 
             width: 100%; 
@@ -27,12 +27,7 @@
             display: table; 
             position: relative;
         }
-        
-        .select-cell {
-            display: table-cell;
-            vertical-align: middle;
-        }
-        
+        .select-cell { display: table-cell; vertical-align: middle; }
         .styled-select { 
             width: 100%; 
             background: transparent; 
@@ -47,22 +42,13 @@
             appearance: none;
             display: block;
         }
-        
-        .arrow-cell {
-            display: table-cell;
-            vertical-align: middle;
-            width: 40px;
-            text-align: center;
-            color: #fbbf24;
-            font-size: 10px;
-            pointer-events: none;
-        }
+        .arrow-cell { display: table-cell; vertical-align: middle; width: 40px; text-align: center; color: #fbbf24; font-size: 10px; pointer-events: none; }
         
         .price-box { background-color: #020617; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 12px; }
         .commodity-name { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
         .price-display { font-size: 28px; font-weight: 900; color: #34d399; }
         
-        /* Lokaler Canvas-Chart Container */
+        /* Canvas Chart Container (Garantiert ohne TradingView-Meldungen) */
         .chart-container { 
             width: 100%; 
             height: 140px; 
@@ -71,7 +57,6 @@
             margin-bottom: 16px; 
             overflow: hidden; 
             border: 1px solid #1e293b;
-            position: relative;
         }
         canvas { display: block; width: 100%; height: 100%; }
         
@@ -106,7 +91,6 @@
             <div class="price-display" id="comm-price">0.00 USD</div>
         </div>
 
-        <!-- Autarker HTML5 Canvas Chart ohne externe Skripte -->
         <div class="chart-container">
             <canvas id="cryptoCanvas"></canvas>
         </div>
@@ -144,7 +128,6 @@
         };
 
         window.cotData = Object.assign({}, defaultMetaData, window.cotData || {});
-
         const tickers = Object.keys(window.cotData);
         let currentTicker = tickers[0];
 
@@ -155,7 +138,6 @@
         function initApp() {
             const selectEl = document.getElementById('asset-select');
             selectEl.innerHTML = "";
-            
             tickers.forEach(ticker => {
                 const data = window.cotData[ticker];
                 const opt = document.createElement('option');
@@ -163,10 +145,8 @@
                 opt.innerText = data.name;
                 selectEl.appendChild(opt);
             });
-
             buildGlobalAlerts();
             updateUI();
-            
             tickerPos = document.getElementById('alert-wrap').offsetWidth;
             requestAnimationFrame(animateTicker);
         }
@@ -181,10 +161,8 @@
                     alerts.push(`⚠️ ACHTUNG ${data.name.split(' (')[0].toUpperCase()}: Extrem Bärisch (Score ${data.cotScore}/100)`);
                 }
             });
-
             const wrap = document.getElementById('alert-wrap');
             const tickerEl = document.getElementById('alert-ticker');
-
             if (alerts.length > 0) {
                 tickerEl.innerText = alerts.join("   |   ") + "   |   ";
                 wrap.style.display = "block";
@@ -197,38 +175,20 @@
             if (!isTickerPaused) {
                 const tickerEl = document.getElementById('alert-ticker');
                 const wrapEl = document.getElementById('alert-wrap');
-                
                 tickerPos -= tickerSpeed;
-                if (tickerPos < -tickerEl.offsetWidth) {
-                    tickerPos = wrapEl.offsetWidth;
-                }
+                if (tickerPos < -tickerEl.offsetWidth) { tickerPos = wrapEl.offsetWidth; }
                 tickerEl.style.transform = `translate3d(${tickerPos}px, -50%, 0)`;
             }
             requestAnimationFrame(animateTicker);
         }
 
-        function toggleTicker() {
-            isTickerPaused = !isTickerPaused;
-        }
+        function toggleTicker() { isTickerPaused = !isTickerPaused; }
 
-        function getDynamicWeather(ticker, currentPrice) {
-            if (ticker === "NG=F") return currentPrice > 2.40 ? "Bullisch (US-Hitzewelle)" : "Neutral";
-            if (ticker === "CC=F") return currentPrice > 7000 ? "Bullisch (Dürre Westafrika)" : "Neutral";
-            if (ticker === "KC=F") return currentPrice > 200 ? "Bullisch (Trockenrisiko Brasilien)" : "Neutral";
-            if (ticker === "ZW=F" || ticker === "ZC=F" || ticker === "ZS=F") return currentPrice < 550 ? "Bärisch (Guter US-Regen)" : "Neutral";
-            if (ticker === "LE=F") return currentPrice > 180 ? "Bullisch (Hohe Futterkosten)" : "Neutral";
-            if (ticker === "LBS=F") return currentPrice > 450 ? "Bullisch (Kanada Waldbrände)" : "Neutral";
-            if (ticker === "HO=F") return currentPrice > 2.30 ? "Bullisch (Kältewelle US-Ostküste)" : "Neutral";
-            return "Kein direkter Wettereinfluss";
-        }
-
-        // Hochperformanter, nativer HTML5 Canvas-Zeichner für Candlesticks & Volumen
         function drawNativeChart(candles) {
             const canvas = document.getElementById('cryptoCanvas');
             if (!canvas) return;
             const ctx = canvas.getContext('2d');
             
-            // Retina-Display Schärfenkorrektur für iPad
             const dpr = window.devicePixelRatio || 1;
             const rect = canvas.getBoundingClientRect();
             canvas.width = rect.width * dpr;
@@ -237,18 +197,15 @@
 
             const width = rect.width;
             const height = rect.height;
-
             ctx.clearRect(0, 0, width, height);
 
             if (!candles || candles.length === 0) return;
 
-            // Preisspannen ermitteln
             const prices = candles.map(c => [c.high, c.low, c.open, c.close]).flat();
             const minPrice = Math.min(...prices);
             const maxPrice = Math.max(...prices);
             const priceRange = maxPrice - minPrice || 1;
 
-            // Volumenspanne ermitteln
             const volumes = candles.map(c => c.volume || 0);
             const maxVolume = Math.max(...volumes) || 1;
 
@@ -256,22 +213,17 @@
             const chartHeight = height - (padding * 2);
             const candleWidth = (width - padding * 2) / candles.length;
 
-            // Gridlinien zeichnen
             ctx.strokeStyle = '#1e293b';
             ctx.lineWidth = 0.5;
             for(let i = 1; i < 4; i++) {
                 let y = padding + (chartHeight / 4) * i;
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(width, y);
-                ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(width, y); ctx.stroke();
             }
 
             candles.forEach((candle, index) => {
                 const x = padding + (index * candleWidth) + (candleWidth * 0.1);
                 const w = candleWidth * 0.8;
 
-                // Koordinaten berechnen (Y ist gespiegelt im Canvas)
                 const yOpen = padding + chartHeight - ((candle.open - minPrice) / priceRange) * chartHeight;
                 const yClose = padding + chartHeight - ((candle.close - minPrice) / priceRange) * chartHeight;
                 const yHigh = padding + chartHeight - ((candle.high - minPrice) / priceRange) * chartHeight;
@@ -280,135 +232,5 @@
                 const isBullish = candle.close >= candle.open;
                 const color = isBullish ? '#34d399' : '#f87171';
 
-                // 1. Volumen-Balken zeichnen (Im Hintergrund, unteres Drittel des Charts)
                 const vH = ((candle.volume || 0) / maxVolume) * (height * 0.25);
-                ctx.fillStyle = isBullish ? 'rgba(52, 211, 153, 0.15)' : 'rgba(248, 113, 113, 0.15)';
-                ctx.fillRect(x, height - vH - 5, w, vH);
-
-                // 2. Candlestick Docht zeichnen
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(x + w/2, yHigh);
-                ctx.lineTo(x + w/2, yLow);
-                ctx.stroke();
-
-                // 3. Candlestick Körper zeichnen
-                ctx.fillStyle = color;
-                const bodyHeight = Math.abs(yClose - yOpen) || 1;
-                ctx.fillRect(x, Math.min(yOpen, yClose), w, bodyHeight);
-            });
-        }
-
-        // Generiert simulierte historische Kerzen falls Yahoo offline ist oder API klemmt
-        function generateFallbackCandles(basePrice) {
-            let candles = [];
-            let current = basePrice * 0.96;
-            for (let i = 0; i < 30; i++) {
-                let open = current;
-                let close = current + (Math.random() - 0.48) * (basePrice * 0.015);
-                let high = Math.max(open, close) + (Math.random() * (basePrice * 0.008));
-                let low = Math.min(open, close) - (Math.random() * (basePrice * 0.008));
-                let volume = Math.floor(Math.random() * 5000) + 1000;
-                candles.push({ open, high, low, close, volume });
-                current = close;
-            }
-            return candles;
-        }
-
-        async function fetchPrice(ticker) {
-            if (ticker !== currentTicker) return;
-
-            try {
-                // Holen von 30 Tagen Historie für die Anzeige von echten Kerzen & Volumen
-                const response = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=30d&interval=1d&_nocache=${Date.now()}`);
-                const data = await response.json();
-                
-                if (ticker !== currentTicker) return;
-
-                if (data?.chart?.result?.[0]) {
-                    const meta = data.chart.result[0].meta;
-                    let price = meta.regularMarketPrice;
-                    let currency = meta.currency || "USD";
-                    
-                    if (ticker === "CC=F" && price < 1000) { price *= 25; currency = "USD"; }
-                    
-                    const decimals = (ticker === "HG=F") ? 3 : 2;
-                    document.getElementById('comm-price').innerText = price.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals}) + " " + currency;
-                    updateLiveWeather(ticker, price);
-
-                    // Kerzen-Daten aus dem JSON extrahieren
-                    const indicators = data.chart.result[0].indicators.quote[0];
-                    const timestamps = data.chart.result[0].timestamp || [];
-                    
-                    let candleData = [];
-                    for(let i=0; i<timestamps.length; i++) {
-                        if(indicators.open[i] != null && indicators.high[i] != null && indicators.low[i] != null && indicators.close[i] != null) {
-                            candleData.push({
-                                open: indicators.open[i],
-                                high: indicators.high[i],
-                                low: indicators.low[i],
-                                close: indicators.close[i],
-                                volume: indicators.volume[i] || 0
-                            });
-                        }
-                    }
-                    drawNativeChart(candleData);
-                } else {
-                    throw new Error();
-                }
-            } catch {
-                if (ticker !== currentTicker) return;
-                const fPrice = fallbackPrices[ticker];
-                const decimals = (ticker === "HG=F") ? 3 : 2;
-                document.getElementById('comm-price').innerText = fPrice.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals}) + " USD";
-                updateLiveWeather(ticker, fPrice);
-                
-                // Fallback Kerzen zeichnen
-                drawNativeChart(generateFallbackCandles(fPrice));
-            }
-        }
-
-        function updateLiveWeather(ticker, price) {
-            const currentWeather = getDynamicWeather(ticker, price);
-            const weatherEl = document.getElementById('weather-impact');
-            weatherEl.innerText = currentWeather;
-
-            if (currentWeather.includes("Bullisch")) { weatherEl.style.color = "#f87171"; }
-            else if (currentWeather.includes("Bärisch")) { weatherEl.style.color = "#34d399"; }
-            else { weatherEl.style.color = "#94a3b8"; }
-        }
-
-        function updateUI() {
-            const data = window.cotData[currentTicker];
-            const meta = defaultMetaData[currentTicker];
-
-            document.getElementById('comm-name').innerText = data.name || meta.name;
-            document.getElementById('cot-score').innerText = (data.cotScore ?? meta.cotScore) + "/100";
-            document.getElementById('cot-pos').innerText = data.position ?? meta.position;
-            document.getElementById('cot-season').innerText = data.seasonality ?? meta.seasonality;
-            
-            const currentStructure = data.structure || meta.structure;
-            document.getElementById('term-structure').innerText = currentStructure;
-
-            document.getElementById('term-structure').style.color = currentStructure.includes("Backwardation") ? "#34d399" : "#94a3b8";
-            document.getElementById('cot-pos').style.color = (data.position ?? meta.position) === "Net-Long" ? "#34d399" : "#f87171";
-
-            document.getElementById('comm-price').innerText = "Lädt...";
-            fetchPrice(currentTicker);
-        }
-
-        function selectTicker() {
-            currentTicker = document.getElementById('asset-select').value;
-            updateUI();
-        }
-
-        // Automatische Neuausrichtung des Canvas bei Bildschirmrotation am iPad
-        window.addEventListener('resize', () => {
-            fetchPrice(currentTicker);
-        });
-
-        initApp();
-    </script>
-</body>
-</html>
+                ctx.fillStyle = isBullish ? 'rgba(52, 211, 153,
