@@ -1,7 +1,7 @@
 name: Automated Commodity Intelligence Updater
 
 on:
-  workflow_dispatch: # Ermöglicht den manuellen Start über den Button
+  workflow_dispatch: # Ermöglicht den manuellen Start über den Button auf GitHub
   schedule:
     - cron: '0 6 * * 6' # Jeden Samstag um 06:00 UTC
 
@@ -9,7 +9,7 @@ jobs:
   update-data:
     runs-on: ubuntu-latest
     permissions:
-      contents: write # WICHTIG: Gibt der Action das Recht, Dateien zu ändern
+      contents: write # WICHTIG: Erlaubt der GitHub Action, Änderungen hochzuladen
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -31,6 +31,6 @@ jobs:
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "actions@github.com"
-          git add index.html
+          git add data.json
           git diff-index --quiet HEAD || git commit -m "Automated COT Data Update"
           git push
