@@ -14,7 +14,7 @@
         .ticker { display: inline-block; animation: marquee 70s linear infinite; padding-left: 100%; }
         @keyframes marquee { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
-        /* CSS-Klasse zum sicheren Stoppen via JS */
+        /* CSS-Klasse zum Pausieren */
         .paused { animation-play-state: paused !important; }
 
         .header { border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px; text-align: center; }
@@ -37,11 +37,7 @@
 </head>
 <body>
     <div class="card">
-        <div class="ticker-wrap" id="alert-wrap" 
-             onmouseenter="document.getElementById('alert-ticker').classList.add('paused')" 
-             onmouseleave="document.getElementById('alert-ticker').classList.remove('paused')"
-             ontouchstart="document.getElementById('alert-ticker').classList.add('paused')"
-             ontouchend="document.getElementById('alert-ticker').classList.remove('paused')">
+        <div class="ticker-wrap" id="alert-wrap" onclick="toggleTicker()">
             <div class="ticker" id="alert-ticker">Scanne Märkte nach Extremwerten...</div>
         </div>
 
@@ -133,6 +129,12 @@
             } else {
                 wrap.style.display = "none";
             }
+        }
+
+        // Neue Toggle-Funktion für das iPad (Ein Klick stoppt, nächster Klick startet)
+        function toggleTicker() {
+            const ticker = document.getElementById('alert-ticker');
+            ticker.classList.toggle('paused');
         }
 
         function getDynamicWeather(ticker, currentPrice) {
