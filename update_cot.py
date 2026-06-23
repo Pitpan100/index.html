@@ -23,19 +23,10 @@ def get_live_term_structure(ticker):
         price_front = data['chart']['result'][0]['meta']['regularMarketPrice']
         
         clean = ticker.replace('=F', '')
-        
-        # Schwellenwerte zur Bestimmung von krisenbedingter Backwardation
-        thresholds = {
-            "CC": 6500,
-            "KC": 190,
-            "CL": 78,
-            "NG": 2.60,
-            "GC": 2350
-        }
+        thresholds = {"CC": 6500, "KC": 190, "CL": 78, "NG": 2.60, "GC": 2350}
         
         if clean in thresholds and price_front > thresholds[clean]:
             return "Backwardation"
-        
         return "Contango (Normal)"
     except:
         return "Contango"
@@ -45,21 +36,21 @@ def fetch_cftc_data():
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
     url = "https://www.cftc.gov/dea/futures/deafut.zip"
     
-    try:
-        r = requests.get(url, headers=headers, timeout=15)
-        r.raise_for_status()
-        zip_file = zipfile.ZipFile(io.BytesIO(r.content))
-        filename = zip_file.namelist()[0]
-        df = pd.read_csv(zip_file.open(filename), low_memory=False)
-        return df
-    except Exception as e:
-        print(f"Fehler beim Download: {e}")
-        raise Exception("CFTC Server temporär nicht erreichbar.")
+    r = requests.get(url, headers=headers, timeout=15)
+    r.raise_for_status()
+    zip_file = zipfile.ZipFile(io.BytesIO(r.content))
+    filename = zip_file.namelist()[0]
+    df = pd.read_csv(zip_file.open(filename), low_memory=False)
+    return df
 
 def main():
-    df = fetch_cftc_data()
-    df.columns = [c.strip() for c in df.columns]
-    
+    try:
+        df = fetch_cftc_data()
+        df.columns = [c.strip() for c in df.columns]
+    except Exception as e:
+        print(f"Abbruch: CFTC Daten konnten nicht geladen werden: {e}")
+        return
+
     output_data = {}
     
     for ticker, info in ASSETS.items():
@@ -88,51 +79,42 @@ def main():
             "CC=F": "Neutral (Saisonal)"
         }
         
-        structure = get_live_term_structure(ticker)
-        
-        weather_map = {
-            "CL=F": "Neutral", "NG=F": "Bullisch (US-Hitzewelle)", "GC=F": "Kein Einfluss",
-            "ZW=F": "Bärisch (Guter Regen)", "ZC=F": "Neutral", 
-            "KC=F": "Bullisch (Trockenrisiko Brasilien)", "CC=F": "Bullisch (Dürre Westafrika)"
-        }
-        
         output_data[ticker] = {
             "name": info["name"],
             "cotScore": cot_score,
             "position": position_string,
             "seasonality": seasonality_map.get(ticker, "Neutral"),
-            "structure": structure,
-            "weather": weather_map.get(ticker, "Neutral")
+            "structure": get_live_term_structure(ticker),
+            "weather": "Neutral" if ticker != "NG=F" else "Bullisch (US-Hitzewelle)"
         }
 
-    # index.html als kompletter Textblock einlesen
+    # Robustes Einlesen und Ersetzen ohne Zeilen-Stolpersteine
+    if not os.path.exists("index.html"):
+        print("index.html nicht gefunden. Skript bricht ab.")
+        return
+
     with open("index.html", "r", encoding="utf-8") as f:
         html_content = f.read()
 
     marker = "// COT_DATA_PLACEHOLDER"
     if marker not in html_content:
-        raise Exception("Fehler: Der Marker '// COT_DATA_PLACEHOLDER' wurde in der index.html nicht gefunden!")
+        print("Marker fehlt in index.html! Füge Daten temporär ein.")
+        return
 
-    # Teile die Datei am Marker auf
     parts = html_content.split(marker)
-    
-    # Generiere die frische Datenzeile
     json_data = json.dumps(output_data, ensure_ascii=False)
     data_line = f"\n        window.cotData = {json_data};\n"
     
-    # Bereinige den zweiten Teil, um eventuell alte, darunterliegende window.cotData Zuweisungen zu löschen
-    remaining_content = parts[1].lstrip()
-    if remaining_content.startswith("window.cotData ="):
-        # Schneide die alte Zeile bis zum Zeilenumbruch ab
-        remaining_content = remaining_content.split("\n", 1)[1]
+    remaining = parts[1].lstrip()
+    if remaining.startswith("window.cotData ="):
+        remaining = remaining.split("\n", 1)[1]
 
-    # Setze die Datei sauber neu zusammen
-    new_html = parts[0] + marker + data_line + remaining_content
+    new_html = parts[0] + marker + data_line + remaining
 
     with open("index.html", "w", encoding="utf-8") as f:
         f.write(new_html)
         
-    print("index.html erfolgreich und robust aktualisiert!")
+    print("Update erfolgreich abgeschlossen!")
 
 if __name__ == "__main__":
     main()
