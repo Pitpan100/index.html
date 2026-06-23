@@ -3,61 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Commodity Intelligence Dashboard</title>
+    <title>COMMODITY.INTELLIGENCE</title>
     <style>
-        body { background-color: #0b0f19; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 20px; }
+        body { background-color: #0b0f19; color: #ffffff; font-family: sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 1400px; margin: 0 auto; }
         .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; border-bottom: 1px solid #1e293b; margin-bottom: 20px; }
-        .logo { font-size: 20px; font-weight: bold; }
-        .logo span { color: #3b82f6; }
-        .dropdown { background-color: #1e293b; color: white; border: 1px solid #334155; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+        .dropdown { background-color: #1e293b; color: white; border: 1px solid #334155; padding: 10px; border-radius: 4px; }
         .grid-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .card { background-color: #121826; border: 1px solid #1e293b; border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
-        .chart-card { background-color: #131722; border: 1px solid #1e293b; border-radius: 8px; padding: 0; overflow: hidden; height: 480px; display: flex; flex-direction: column; }
-        .card-title { font-size: 12px; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; font-weight: 600; }
+        .card { background-color: #121826; border: 1px solid #1e293b; border-radius: 8px; padding: 15px; }
+        .chart-container { height: 450px; }
         .bottom-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
-        .metric-value { font-size: 20px; font-weight: bold; margin-top: 5px; color: #fff; }
+        .metric { font-size: 18px; font-weight: bold; margin-top: 5px; color: #3b82f6; }
+        .label { font-size: 11px; color: #94a3b8; text-transform: uppercase; }
     </style>
-    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+    <script src="https://s3.tradingview.com/tv.js"></script>
 </head>
 <body>
 
 <div class="container">
     <div class="header">
-        <div class="logo">COMMODITY<span>.INTELLIGENCE</span></div>
+        <div style="font-weight:bold; font-size:20px;">COMMODITY<span>.INTELLIGENCE</span></div>
         <select class="dropdown" id="asset-select" onchange="updateDashboard()">
             <option value="ICEUS:CC1!">Kakao (CC)</option>
             <option value="ICEUS:KC1!">Kaffee (KC)</option>
             <option value="ICEUS:SB1!">Zucker (SB)</option>
             <option value="CBOT:ZS1!">Sojabohnen (ZS)</option>
             <option value="COMEX:HG1!">Kupfer (HG)</option>
-            <option value="NYMEX:CL1!">Rohöl WTI (CL)</option>
-            <option value="CBOT:ZC1!">Mais (ZC)</option>
+            <option value="NYMEX:CL1!">Rohöl (CL)</option>
         </select>
     </div>
 
     <div class="grid-layout">
-        <div class="chart-card" id="chart-container">
-            <div id="tradingview_widget" style="height: 100%; width: 100%;"></div>
+        <div class="card" style="padding:0; overflow:hidden;">
+            <div id="chart-div" class="chart-container"></div>
         </div>
-
-        <div style="display: flex; flex-direction: column; gap: 20px;">
-            <div class="card" style="height: 220px;">
-                <div class="card-title">AGRAR-WETTER RADAR</div>
-                <iframe src="https://embed.windy.com/embed2.html?lat=50&lon=10&zoom=5" width="100%" height="160" frameborder="0"></iframe>
+        <div style="display:flex; flex-direction:column; gap:20px;">
+            <div class="card" style="height:200px;">
+                <iframe src="https://embed.windy.com/" width="100%" height="100%" frameborder="0"></iframe>
             </div>
-            <div class="card" style="height: 240px; overflow-y: auto;">
-                <div class="card-title">MARKT-NEWS</div>
-                <div id="news-widget"></div>
-            </div>
+            <div class="card" id="news-div" style="flex:1;"></div>
         </div>
     </div>
 
     <div class="bottom-grid">
-        <div class="card"><div class="card-title">SENTIMENT</div><div class="metric-value">Neutral</div></div>
-        <div class="card"><div class="card-title">STRUKTUR</div><div class="metric-value">--</div></div>
-        <div class="card"><div class="card-title">POSITION</div><div class="metric-value">--</div></div>
-        <div class="card"><div class="card-title">TREND</div><div class="metric-value">--</div></div>
+        <div class="card"><div class="label">SENTIMENT</div><div class="metric">Neutral</div></div>
+        <div class="card"><div class="label">STRUKTUR</div><div class="metric">Backwardation</div></div>
+        <div class="card"><div class="label">POSITION</div><div class="metric">Keine Daten</div></div>
+        <div class="card"><div class="label">TREND</div><div class="metric">Zyklisch</div></div>
     </div>
 </div>
 
@@ -65,32 +57,28 @@
 function updateDashboard() {
     const symbol = document.getElementById('asset-select').value;
     
-    // Chart neu rendern mit explizitem Börsenplatz (z.B. ICEUS, CBOT)
-    document.getElementById('tradingview_widget').innerHTML = "";
+    // Chart neu laden
+    document.getElementById('chart-div').innerHTML = "";
     new TradingView.widget({
-        "container_id": "tradingview_widget",
+        "container_id": "chart-div",
         "symbol": symbol,
         "theme": "dark",
-        "interval": "D",
         "width": "100%",
-        "height": "100%",
-        "allow_symbol_change": false
+        "height": "100%"
     });
 
-    // News Widget neu laden
-    document.getElementById('news-widget').innerHTML = "";
+    // News neu laden
+    document.getElementById('news-div').innerHTML = "";
     new TradingView.widget({
-        "container_id": "news-widget",
+        "container_id": "news-div",
         "symbol": symbol,
         "theme": "dark",
         "widgetType": "timeline",
         "width": "100%",
-        "height": "200"
+        "height": "100%"
     });
 }
-
 window.onload = updateDashboard;
 </script>
-
 </body>
 </html>
