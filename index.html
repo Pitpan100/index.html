@@ -9,20 +9,19 @@
         .card { background: #121826; border: 1px solid #1e293b; border-radius: 8px; padding: 15px; }
         #chart-div { height: 450px; }
         select { width: 100%; padding: 12px; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 4px; font-size: 16px; margin-bottom: 15px; }
-        .label { color: #94a3b8; font-size: 10px; text-transform: uppercase; margin-bottom: 5px; }
-        .val { font-size: 16px; font-weight: bold; color: #fff; }
     </style>
 </head>
 <body>
 
 <select id="ticker" onchange="load()">
-    <option value="CC1!">Kakao (Cocoa)</option>
-    <option value="KC1!">Kaffee (Coffee)</option>
-    <option value="SB1!">Zucker (Sugar)</option>
-    <option value="ZS1!">Soja (Soybeans)</option>
-    <option value="HG1!">Kupfer (Copper)</option>
-    <option value="CL1!">Rohöl (WTI)</option>
-    <option value="GC1!">Gold</option>
+    <option value="ICEUS:CC1!">Kakao</option>
+    <option value="ICEUS:KC1!">Kaffee</option>
+    <option value="ICEUS:SB1!">Zucker</option>
+    <option value="CBOT:ZS1!">Soja</option>
+    <option value="COMEX:HG1!">Kupfer</option>
+    <option value="NYMEX:CL1!">Rohöl WTI</option>
+    <option value="CBOT:ZC1!">Mais</option>
+    <option value="COMEX:GC1!">Gold</option>
 </select>
 
 <div class="grid">
@@ -35,13 +34,6 @@
     </div>
 </div>
 
-<div class="grid" style="margin-top:15px; grid-template-columns: repeat(4, 1fr);">
-    <div class="card"><div class="label">COT SCORE</div><div class="val" id="cot">Neutral</div></div>
-    <div class="card"><div class="label">STRUKTUR</div><div class="val" id="str">Stabile Kurve</div></div>
-    <div class="card"><div class="label">POSITION</div><div class="val">Keine Daten</div></div>
-    <div class="card"><div class="label">TREND</div><div class="val">Zyklisch</div></div>
-</div>
-
 <script src="https://s3.tradingview.com/tv.js"></script>
 <script>
 function load() {
@@ -49,17 +41,16 @@ function load() {
     document.getElementById('chart-div').innerHTML = "";
     document.getElementById('news-div').innerHTML = "";
     
-    // Chart Widget
     new TradingView.widget({
         "container_id": "chart-div",
-        "symbol": sym,
+        "symbol": sym, // Hier wird jetzt exakt z.B. "ICEUS:CC1!" übergeben
         "theme": "dark",
         "width": "100%",
         "height": "100%",
-        "interval": "D"
+        "interval": "D",
+        "allow_symbol_change": false // Verhindert, dass das Widget selbst sucht
     });
     
-    // News Widget
     new TradingView.widget({
         "container_id": "news-div",
         "symbol": sym,
