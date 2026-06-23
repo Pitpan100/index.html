@@ -2,27 +2,26 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Commodity Terminal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commodity Intelligence</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background: #0b0f19; color: #e2e8f0; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
+        body { background: #0b0f19; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
         .card { max-width: 450px; margin: auto; background: #0f172a; border-radius: 16px; padding: 16px; border: 1px solid #1e293b; }
         .select-wrapper { position: relative; margin-bottom: 15px; }
         select { width: 100%; padding: 12px; background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 8px; font-weight: 600; appearance: none; }
         .select-wrapper::after { content: '▼'; position: absolute; right: 15px; top: 14px; font-size: 10px; color: #94a3b8; pointer-events: none; }
-        #chart { width: 100%; height: 250px; background: #020617; border-radius: 8px; margin-bottom: 15px; }
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        #chart { width: 100%; height: 250px; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
         .stat-box { background: #1e293b; padding: 10px; border-radius: 8px; text-align: center; }
         .label { font-size: 9px; color: #64748b; text-transform: uppercase; }
-        .val { font-size: 13px; font-weight: bold; color: #f1f5f9; }
-        .news { margin-top: 15px; font-size: 12px; color: #94a3b8; line-height: 1.4; border-top: 1px solid #1e293b; padding-top: 10px; }
+        .val { font-size: 13px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="card">
         <div class="select-wrapper">
-            <select id="asset-select" onchange="updateDashboard()"></select>
+            <select id="asset-select" onchange="update()"></select>
         </div>
         <div id="chart"></div>
         <div class="stats-grid">
@@ -31,50 +30,32 @@
             <div class="stat-box"><div class="label">Saisonalität</div><div class="val" id="sea">--</div></div>
             <div class="stat-box"><div class="label">Kurve</div><div class="val" id="str">--</div></div>
         </div>
-        <div class="news" id="news">📰 Marktdaten werden geladen...</div>
     </div>
-
     <script>
         const assets = {
-            "CL=F": { n: "Rohöl", cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "OPEC+ signalisiert Förderkürzungen zur Preisstützung." },
-            "GC=F": { n: "Gold", cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Zentralbank-Goldkäufe setzen weltweit neue Rekorde." },
-            "SI=F": { n: "Silber", cot: "38/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Industrielle Nachfrage für Photovoltaik wächst." },
-            "NG=F": { n: "Erdgas", cot: "76/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "Hoher Energiebedarf durch aktuelle Hitzewellen." },
-            "HG=F": { n: "Kupfer", cot: "68/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "Minen-Engpässe führen zu globalem Defizit." },
-            "ZC=F": { n: "Mais", cot: "51/100", pos: "Neutral", sea: "Bärisch", str: "Contango", news: "US-Anbauberichte zeigen stabile Ertragsaussichten." },
-            "ZS=F": { n: "Sojabohnen", cot: "72/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "Exportnachfrage bleibt trotz Preisen sehr stark." },
-            "KC=F": { n: "Kaffee", cot: "73/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "Ernteausfälle in Brasilien treiben die Notierungen." },
-            "CC=F": { n: "Kakao", cot: "36/100", pos: "Net-Short", sea: "Neutral", str: "Backwardation", news: "Wetterkapriolen führen zu extremer Verknappung." },
-            "SB=F": { n: "Zucker", cot: "58/100", pos: "Net-Long", sea: "Bullisch", str: "Contango", news: "Produktionsprognosen für die Saison gesenkt." }
+            "CL=F": { n: "Rohöl", cot: "54/100", pos: "Long", sea: "Bullisch", str: "Backwardation" },
+            "GC=F": { n: "Gold", cot: "41/100", pos: "Short", sea: "Bärisch", str: "Contango" },
+            "SI=F": { n: "Silber", cot: "38/100", pos: "Short", sea: "Bärisch", str: "Contango" },
+            "HG=F": { n: "Kupfer", cot: "68/100", pos: "Long", sea: "Bullisch", str: "Backwardation" }
         };
-
-        const chart = LightweightCharts.createChart(document.getElementById('chart'), {
-            layout: { background: { color: '#020617' }, textColor: '#94a3b8' },
-            grid: { vertLines: { color: '#1e293b' }, horzLines: { color: '#1e293b' } },
-            width: 418, height: 250
-        });
-        const candleSeries = chart.addCandlestickSeries();
-
         const sel = document.getElementById('asset-select');
         Object.keys(assets).forEach(k => sel.innerHTML += `<option value="${k}">${assets[k].n}</option>`);
+        
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), { width: 418, height: 250, layout: { background: { color: '#020617' }, textColor: '#94a3b8' }});
+        const candleSeries = chart.addCandlestickSeries();
 
-        async function updateDashboard() {
+        async function update() {
             const t = sel.value, m = assets[t];
             document.getElementById('cot').innerText = m.cot;
             document.getElementById('pos').innerText = m.pos;
             document.getElementById('sea').innerText = m.sea;
             document.getElementById('str').innerText = m.str;
-            document.getElementById('news').innerText = "📰 " + m.news;
-            
             const res = await fetch(`https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${t}?range=1mo&interval=1d`);
             const j = await res.json();
             const q = j.chart.result[0].indicators.quote[0];
-            candleSeries.setData(q.close.map((c, i) => ({
-                time: j.chart.result[0].timestamp[i],
-                open: q.open[i], high: q.high[i], low: q.low[i], close: c
-            })));
+            candleSeries.setData(q.close.map((c, i) => ({ time: j.chart.result[0].timestamp[i], open: q.open[i], high: q.high[i], low: q.low[i], close: c })));
         }
-        updateDashboard();
+        update();
     </script>
 </body>
 </html>
