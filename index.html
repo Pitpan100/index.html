@@ -6,70 +6,80 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>Commodity Intelligence</title>
     <style>
-        body { background: #0b0f19; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
-        .card { background: #0f172a; border-radius: 15px; padding: 20px; border: 1px solid #1e293b; max-width: 400px; margin: auto; }
-        select { width: 100%; padding: 12px; background: #1e293b; color: white; border-radius: 8px; border: none; margin-bottom: 20px; font-weight: bold; }
-        #chartCanvas { width: 100%; height: 160px; background: #020617; border-radius: 8px; margin-bottom: 20px; display: block; border: 1px solid #1e293b; }
-        .price { font-size: 28px; font-weight: 900; color: #34d399; margin-bottom: 20px; text-align: center; }
-        .data-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 13px; color: #94a3b8; }
+        body { background: #0b0f19; color: #f3f4f6; font-family: -apple-system, sans-serif; margin: 0; padding: 16px; }
+        .card { background: #0f172a; border-radius: 16px; padding: 20px; border: 1px solid #1e293b; max-width: 400px; margin: auto; }
+        .select { width: 100%; padding: 12px; background: #1e293b; color: white; border-radius: 8px; border: none; font-weight: bold; margin-bottom: 15px; }
+        .price { font-size: 28px; font-weight: 900; color: #34d399; text-align: center; margin-bottom: 15px; }
+        #chartCanvas { width: 100%; height: 130px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; display: block; margin-bottom: 15px; }
+        .row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
+        .label { color: #94a3b8; }
+        .val { font-weight: 700; }
     </style>
 </head>
 <body>
     <div class="card">
-        <select id="ticker" onchange="loadData()">
-            <option value="GC=F">Gold</option>
-            <option value="SI=F">Silber</option>
-            <option value="CL=F">Rohöl</option>
-        </select>
-        <div id="price" class="price">Lädt Kurs...</div>
+        <select id="asset-select" class="select" onchange="updateUI()"></select>
+        <div id="price" class="price">Lädt...</div>
         <canvas id="chartCanvas"></canvas>
-        <div id="details"></div>
+        <div id="stats">
+            <div class="row"><span class="label">COT Score:</span><span id="cot" class="val">--</span></div>
+            <div class="row"><span class="label">Position:</span><span id="pos" class="val">--</span></div>
+            <div class="row"><span class="label">Saisonalität:</span><span id="season" class="val">--</span></div>
+            <div class="row"><span class="label">Terminkurve:</span><span id="struct" class="val">--</span></div>
+        </div>
     </div>
 
     <script>
-        async function loadData() {
-            const ticker = document.getElementById('ticker').value;
-            const priceEl = document.getElementById('price');
+        const assets = {
+            "CL=F": { name: "Rohöl", cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation" },
+            "NG=F": { name: "Erdgas", cot: "76/100", pos: "Net-Long", sea: "Neutral", str: "Contango" },
+            "GC=F": { name: "Gold", cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango" },
+            "SI=F": { name: "Silber", cot: "38/100", pos: "Net-Short", sea: "Bärisch", str: "Contango" },
+            "HG=F": { name: "Kupfer", cot: "68/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation" },
+            "ZW=F": { name: "Weizen", cot: "49/100", pos: "Neutral", sea: "Bärisch", str: "Contango" },
+            "ZC=F": { name: "Mais", cot: "51/100", pos: "Neutral", sea: "Bärisch", str: "Contango" },
+            "ZS=F": { name: "Sojabohnen", cot: "72/100", pos: "Net-Long", sea: "Neutral", str: "Contango" },
+            "KC=F": { name: "Kaffee", cot: "73/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation" },
+            "CC=F": { name: "Kakao", cot: "36/100", pos: "Net-Short", sea: "Neutral", str: "Backwardation" }
+        };
+
+        const sel = document.getElementById('asset-select');
+        Object.keys(assets).forEach(key => sel.innerHTML += `<option value="${key}">${assets[key].name}</option>`);
+
+        async function updateUI() {
+            const ticker = sel.value;
+            const meta = assets[ticker];
+            document.getElementById('cot').innerText = meta.cot;
+            document.getElementById('pos').innerText = meta.pos;
+            document.getElementById('season').innerText = meta.sea;
+            document.getElementById('struct').innerText = meta.str;
             
             try {
-                // Proxy für CORS-Umgehung auf dem iPad
                 const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
                 const res = await fetch(url);
                 const data = await res.json();
-                
-                const quote = data.chart.result[0].indicators.quote[0].close;
-                const price = data.chart.result[0].meta.regularMarketPrice;
-                
-                priceEl.innerText = price.toFixed(2) + " USD";
-                drawChart(quote);
-            } catch(e) {
-                priceEl.innerText = "Daten nicht verfügbar";
-            }
+                const q = data.chart.result[0].indicators.quote[0].close;
+                document.getElementById('price').innerText = data.chart.result[0].meta.regularMarketPrice.toFixed(2) + " USD";
+                draw(q);
+            } catch(e) { document.getElementById('price').innerText = "Fehler"; }
         }
 
-        function drawChart(data) {
+        function draw(data) {
             const canvas = document.getElementById('chartCanvas');
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
+            canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const cleanData = data.filter(n => n);
-            const min = Math.min(...cleanData), max = Math.max(...cleanData);
-            
-            ctx.strokeStyle = "#34d399";
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            
-            cleanData.forEach((val, i) => {
-                const x = (i / (cleanData.length - 1)) * canvas.width;
-                const y = canvas.height - ((val - min) / (max - min) * canvas.height);
+            ctx.strokeStyle = "#34d399"; ctx.lineWidth = 2; ctx.beginPath();
+            const clean = data.filter(n=>n);
+            const min = Math.min(...clean), max = Math.max(...clean);
+            clean.forEach((v, i) => {
+                const x = (i / (clean.length - 1)) * canvas.width;
+                const y = canvas.height - ((v - min) / (max - min) * canvas.height);
                 i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             });
             ctx.stroke();
         }
-
-        loadData();
+        updateUI();
     </script>
 </body>
 </html>
