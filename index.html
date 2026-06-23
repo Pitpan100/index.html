@@ -20,7 +20,8 @@
         .label { color: #94a3b8; }
         .value { font-weight: 700; }
         .navigation { display: flex; justify-content: space-between; margin-top: 20px; gap: 12px; }
-        .btn { background-color: #1e293b; border: 1px solid #334155; color: #f1f5f9; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 18px; width: 50%; }
+        .btn { background-color: #1e293b; border: 1px solid #334155; color: #f1f5f9; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 18px; width: 50%; border: none; }
+        .btn:active { background-color: #334155; }
     </style>
 </head>
 <body>
@@ -48,13 +49,13 @@
     <script>
         const fallbackPrices = { "CL=F": 73.88, "NG=F": 2.45, "GC=F": 2340.50, "ZW=F": 610.25, "ZC=F": 450.50, "KC=F": 220.10, "CC=F": 8450.00 };
         const defaultMetaData = {
-            "CL=F": { name: "Rohöl (Crude Oil)", cotScore: 54, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" },
-            "NG=F": { name: "Erdgas (Nat Gas)", cotScore: 76, position: "Net-Long", seasonality: "Neutral", structure: "Contango" },
-            "GC=F": { name: "Gold", cotScore: 41, position: "Net-Short", seasonality: "Bärisch", structure: "Contango (Normal)" },
-            "ZW=F": { name: "Weizen (Wheat)", cotScore: 49, position: "Neutral", seasonality: "Bärisch", structure: "Contango" },
-            "ZC=F": { name: "Mais (Corn)", cotScore: 51, position: "Neutral", seasonality: "Bärisch", structure: "Contango" },
-            "KC=F": { name: "Kaffee (Coffee)", cotScore: 73, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" },
-            "CC=F": { name: "Kakao (Cocoa)", cotScore: 36, position: "Net-Short", seasonality: "Neutral", structure: "Backwardation" }
+            "CL=F": { name: "Rohöl (Crude Oil)", cotScore: 54, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation", weather: "Neutral" },
+            "NG=F": { name: "Erdgas (Nat Gas)", cotScore: 76, position: "Net-Long", seasonality: "Neutral", structure: "Contango", weather: "Bullisch (US-Hitzewelle)" },
+            "GC=F": { name: "Gold", cotScore: 41, position: "Net-Short", seasonality: "Bärisch", structure: "Contango (Normal)", weather: "Kein Einfluss" },
+            "ZW=F": { name: "Weizen (Wheat)", cotScore: 49, position: "Neutral", seasonality: "Bärisch", structure: "Contango", weather: "Bärisch (Guter Regen)" },
+            "ZC=F": { name: "Mais (Corn)", cotScore: 51, position: "Neutral", seasonality: "Bärisch", structure: "Contango", weather: "Neutral" },
+            "KC=F": { name: "Kaffee (Coffee)", cotScore: 73, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation", weather: "Bullisch (Trockenrisiko)" },
+            "CC=F": { name: "Kakao (Cocoa)", cotScore: 36, position: "Net-Short", seasonality: "Neutral", structure: "Backwardation", weather: "Bullisch (Dürre)" }
         };
 
         // COT_DATA_PLACEHOLDER
@@ -71,8 +72,14 @@
                 if (data?.chart?.result?.[0]) {
                     let price = data.chart.result[0].meta.regularMarketPrice;
                     let currency = data.chart.result[0].meta.currency || "USD";
-                    if (ticker === "CC=F" && price < 1000) price *= 25;
-                    document.getElementById('comm-price').innerText = price.toLocaleString('en-US', {minimumFractionDigits: 2}) + " " + currency;
+                    
+                    // Korrektur für Kakao (CC=F) und Kaffee falls Pence/Zentbeträge geliefert werden
+                    if (currency === "GBp" || currency === "USX" || (ticker === "CC=F" && price < 1000)) {
+                        if (price < 1000) price = price * 25; 
+                        currency = "USD";
+                    }
+                    
+                    document.getElementById('comm-price').innerText = price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " " + currency;
                 }
             } catch {
                 document.getElementById('comm-price').innerText = fallbackPrices[ticker].toLocaleString('en-US', {minimumFractionDigits: 2}) + " USD";
@@ -82,12 +89,29 @@
         function updateUI() {
             const ticker = tickers[currentIndex];
             const data = window.cotData[ticker];
-            document.getElementById('comm-name').innerText = data.name || defaultMetaData[ticker].name;
-            document.getElementById('cot-score').innerText = (data.cotScore ?? defaultMetaData[ticker].cotScore) + "/100";
-            document.getElementById('cot-pos').innerText = data.position ?? defaultMetaData[ticker].position;
-            document.getElementById('cot-season').innerText = data.seasonality ?? "Neutral";
-            document.getElementById('term-structure').innerText = data.structure ?? "Contango";
-            document.getElementById('weather-impact').innerText = ticker === "NG=F" ? "Bullisch (US-Hitzewelle)" : "Neutral";
+            const meta = defaultMetaData[ticker];
+
+            document.getElementById('comm-name').innerText = data.name || meta.name;
+            document.getElementById('cot-score').innerText = (data.cotScore ?? meta.cotScore) + "/100";
+            document.getElementById('cot-pos').innerText = data.position ?? meta.position;
+            document.getElementById('cot-season').innerText = data.seasonality ?? meta.seasonality;
+            
+            const currentStructure = data.structure || meta.structure;
+            const currentWeather = data.weather || meta.weather;
+            
+            document.getElementById('term-structure').innerText = currentStructure;
+            document.getElementById('weather-impact').innerText = currentWeather;
+
+            // Farben anpassen
+            const structEl = document.getElementById('term-structure');
+            structEl.style.color = currentStructure.includes("Backwardation") ? "#34d399" : "#94a3b8";
+
+            const weatherEl = document.getElementById('weather-impact');
+            weatherEl.style.color = currentWeather.includes("Bullisch") ? "#f87171" : (currentWeather.includes("Bärisch") ? "#34d399" : "#94a3b8");
+
+            const posEl = document.getElementById('cot-pos');
+            posEl.style.color = (data.position ?? meta.position) === "Net-Long" ? "#34d399" : "#f87171";
+
             fetchPrice(ticker);
         }
 
