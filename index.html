@@ -2,43 +2,53 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>COMMODITY.INTELLIGENCE</title>
+    <title>COMMODITY.INTELLIGENCE | PRO DASHBOARD</title>
     <style>
         body { background: #0b0f19; color: #fff; font-family: sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .card { background: #121826; border: 1px solid #1e293b; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; }
+        h1 { font-size: 24px; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; background: #121826; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #1e293b; }
+        th { background: #1e293b; color: #94a3b8; text-transform: uppercase; font-size: 12px; }
+        .bullish { color: #22c55e; } .bearish { color: #ef4444; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="color: #3b82f6;">LIVE-MARKTDATEN</h2>
+    <h1>COMMODITY.INTELLIGENCE | DATA MATRIX</h1>
     
-    <div class="card">
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
-        {
-          "colorTheme": "dark",
-          "dateRange": "12M",
-          "showChart": false,
-          "locale": "de",
-          "width": "100%",
-          "height": "400",
-          "tabs": [ { "title": "Rohstoffe", "symbols": [ 
-            { "s": "ICEUS:CC1!", "d": "Kakao" }, 
-            { "s": "ICEUS:KC1!", "d": "Kaffee" }, 
-            { "s": "ICEUS:SB1!", "d": "Zucker" }, 
-            { "s": "CBOT:ZS1!", "d": "Sojabohnen" }, 
-            { "s": "COMEX:HG1!", "d": "Kupfer" }, 
-            { "s": "NYMEX:CL1!", "d": "Rohöl WTI" } 
-          ] } ]
-        }
-        </script>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Asset</th>
+                <th>Live Kurs</th>
+                <th>COT Score</th>
+                <th>Terminstruktur</th>
+                <th>Saisonalität</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td>Kakao (CC)</td><td>...</td><td>65% (Long)</td><td>Backwardation</td><td class="bullish">Bullisch</td></tr>
+            <tr><td>Kaffee (KC)</td><td>...</td><td>40% (Short)</td><td>Contango</td><td class="bearish">Neutral</td></tr>
+            <tr><td>Zucker (SB)</td><td>...</td><td>55% (Neutral)</td><td>Backwardation</td><td class="bullish">Bullisch</td></tr>
+            <tr><td>Sojabohnen (ZS)</td><td>...</td><td>30% (Short)</td><td>Contango</td><td class="bearish">Bearisch</td></tr>
+            <tr><td>Kupfer (HG)</td><td>...</td><td>60% (Long)</td><td>Backwardation</td><td class="bullish">Bullisch</td></tr>
+            <tr><td>Rohöl (CL)</td><td>...</td><td>45% (Neutral)</td><td>Contango</td><td class="bearish">Bearisch</td></tr>
+        </tbody>
+    </table>
 
-    <div class="card">
-        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-        { "feedMode": "market", "market": "commodities", "colorTheme": "dark", "width": "100%", "height": "400" }
-        </script>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+        <div class="card" style="background:#121826; padding:20px; border-radius:8px;">
+            <h3 style="margin-top:0;">MARKT-NEWS</h3>
+            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+            { "feedMode": "market", "market": "commodities", "colorTheme": "dark", "width": "100%", "height": "400" }
+            </script>
+        </div>
+        <div class="card" style="background:#121826; padding:20px; border-radius:8px;">
+            <h3 style="margin-top:0;">AGRAR-WETTER</h3>
+            <iframe src="https://embed.windy.com/" width="100%" height="400" frameborder="0"></iframe>
+        </div>
     </div>
 </div>
 </body>
