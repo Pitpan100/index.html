@@ -3,53 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Live Intelligence</title>
+    <title>Commodity Intelligence Hub</title>
     <style>
-        body { background: #0b0f19; color: #fff; font-family: sans-serif; padding: 15px; }
-        .card { background: #0f172a; border-radius: 16px; padding: 20px; border: 1px solid #334155; max-width: 400px; margin: auto; }
-        .price { font-size: 32px; font-weight: 800; color: #34d399; margin: 10px 0; }
-        .news-item { font-size: 13px; color: #cbd5e1; margin-bottom: 10px; border-left: 3px solid #fbbf24; padding-left: 10px; }
+        :root { --bg: #0b0f19; --card: #0f172a; --accent: #fbbf24; --text: #f3f4f6; }
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
+        .card { background: var(--card); border-radius: 16px; padding: 15px; border: 1px solid #1e293b; max-width: 400px; margin: auto; }
+        .ticker-wrap { background: #020617; color: #f87171; padding: 8px; border-radius: 8px; font-size: 11px; margin-bottom: 10px; border: 1px solid #ef4444; }
+        select { width: 100%; padding: 12px; background: #1e293b; color: white; border-radius: 8px; border: none; font-weight: bold; margin-bottom: 10px; }
+        .price { font-size: 28px; font-weight: 900; color: #34d399; text-align: center; }
+        #chartCanvas { width: 100%; height: 150px; background: #020617; border-radius: 8px; margin: 10px 0; border: 1px solid #1e293b; }
+        .news-box { font-size: 12px; color: #cbd5e1; background: #020617; padding: 10px; border-radius: 8px; margin-bottom: 10px; }
+        .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <select id="ticker" onchange="refreshAll()" class="select" style="width:100%; padding:10px; background:#1e293b; color:white; border-radius:8px; border:none;">
-            <option value="GC=F">Gold</option>
-            <option value="CL=F">Rohöl</option>
-            <option value="SI=F">Silber</option>
-        </select>
-        <div id="price" class="price">Lädt Kurs...</div>
-        <div id="news-container"></div>
+        <div id="ticker-wrap" onclick="toggleTicker()">⚠️ ALERT: Marktanalyse läuft... (Klick zum Pausieren)</div>
+        <select id="asset-select" onchange="updateDashboard()"></select>
+        <div id="price" class="price">--</div>
+        <canvas id="chartCanvas"></canvas>
+        <div id="news-box" class="news-box">Lade News...</div>
+        <div id="stats">
+            <div class="row"><span class="label">COT Score:</span><span id="cot" class="val">--</span></div>
+            <div class="row"><span class="label">Position:</span><span id="pos" class="val">--</span></div>
+            <div class="row"><span class="label">Saisonalität:</span><span id="season" class="val">--</span></div>
+            <div class="row"><span class="label">Terminkurve:</span><span id="struct" class="val">--</span></div>
+        </div>
     </div>
 
     <script>
-        // Funktion für Live-Kurse
-        async function fetchPrice() {
-            const ticker = document.getElementById('ticker').value;
-            const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=1d`;
+        const assets = {
+            "CL=F": { name: "Rohöl", cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "OPEC+ signalisiert Kürzungen." },
+            "GC=F": { name: "Gold", cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Zentralbanken kaufen Gold." },
+            "SI=F": { name: "Silber", cot: "38/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Industrie-Nachfrage stabil." },
+            "NG=F": { name: "Erdgas", cot: "76/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "Hitzewellen treiben AC-Bedarf." },
+            "HG=F": { name: "Kupfer", cot: "68/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "Minenschließungen verknappen Markt." },
+            "ZW=F": { name: "Weizen", cot: "49/100", pos: "Neutral", sea: "Bärisch", str: "Contango", news: "Trockenheit in Russland." }
+        };
+
+        const sel = document.getElementById('asset-select');
+        Object.keys(assets).forEach(key => sel.innerHTML += `<option value="${key}">${assets[key].name}</option>`);
+
+        async function updateDashboard() {
+            const ticker = sel.value;
+            const meta = assets[ticker];
+            document.getElementById('cot').innerText = meta.cot;
+            document.getElementById('pos').innerText = meta.pos;
+            document.getElementById('season').innerText = meta.sea;
+            document.getElementById('struct').innerText = meta.str;
+            document.getElementById('news-box').innerText = "📰 " + meta.news;
+            
+            // Proxy-Request für Daten
+            const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
             try {
                 const res = await fetch(url);
                 const data = await res.json();
-                const price = data.chart.result[0].meta.regularMarketPrice;
-                document.getElementById('price').innerText = price.toFixed(2) + " USD";
-            } catch(e) { document.getElementById('price').innerText = "Update fehlgeschlagen"; }
+                const q = data.chart.result[0].indicators.quote[0];
+                document.getElementById('price').innerText = data.chart.result[0].meta.regularMarketPrice.toFixed(2) + " USD";
+                drawChart(q.close, q.volume);
+            } catch(e) { document.getElementById('price').innerText = "Fehler"; }
         }
 
-        // Funktion für Live-News (nutzt RSS-Feed als Quelle)
-        async function fetchNews() {
-            const container = document.getElementById('news-container');
-            // Wir nutzen einen kostenlosen RSS-to-JSON Konverter für News
-            const url = "https://api.rss2json.com/v1/api.json?rss_url=https://www.cnbc.com/id/19836768/device/rss/rss.html";
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                container.innerHTML = data.items.slice(0, 3).map(n => `<div class="news-item">${n.title}</div>`).join('');
-            } catch(e) { container.innerHTML = "Keine News verfügbar"; }
+        function drawChart(close, vol) {
+            const canvas = document.getElementById('chartCanvas');
+            canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // Zeichne Preis-Linie
+            ctx.strokeStyle = "#34d399"; ctx.beginPath();
+            const min = Math.min(...close.filter(n=>n)), max = Math.max(...close.filter(n=>n));
+            close.forEach((v, i) => {
+                const x = (i / (close.length - 1)) * canvas.width;
+                const y = canvas.height - ((v - min) / (max - min) * canvas.height);
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            });
+            ctx.stroke();
         }
 
-        function refreshAll() { fetchPrice(); fetchNews(); }
-        setInterval(refreshAll, 60000); // Automatisches Update alle 60 Sek.
-        refreshAll();
+        updateDashboard();
+        setInterval(updateDashboard, 60000); // Live-Refresh alle 60s
     </script>
 </body>
 </html>
