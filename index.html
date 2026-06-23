@@ -2,59 +2,57 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pro Commodity Terminal</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background: #050505; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
-        .card { max-width: 450px; margin: auto; background: #0d0d0d; border: 1px solid #222; border-radius: 12px; padding: 15px; }
-        select { width: 100%; padding: 12px; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 8px; margin-bottom: 15px; font-weight: bold; }
-        #chart { width: 100%; height: 220px; border-radius: 8px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
-        .box { background: #1a1a1a; padding: 10px; border-radius: 6px; text-align: center; }
+        body { background: #050505; color: #eee; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
+        .card { max-width: 450px; margin: auto; background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; }
+        select { width: 100%; padding: 12px; background: #222; color: #fff; border: 1px solid #444; border-radius: 8px; font-weight: bold; margin-bottom: 15px; }
+        #chart { width: 100%; height: 220px; background: #000; border-radius: 8px; border: 1px solid #333; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .box { background: #222; padding: 10px; border-radius: 6px; text-align: center; }
         .label { font-size: 8px; color: #888; text-transform: uppercase; }
-        .val { font-size: 12px; font-weight: bold; margin-top: 3px; }
+        .val { font-size: 13px; font-weight: bold; color: #fff; margin-top: 4px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <select id="sel" onchange="update()"></select>
+        <select id="sel" onchange="upd()"></select>
         <div id="chart"></div>
         <div class="grid">
-            <div class="box"><div class="label">COT Pos</div><div class="val" id="cot">--</div></div>
-            <div class="box"><div class="label">Change</div><div class="val" id="chg">--</div></div>
+            <div class="box"><div class="label">COT Score</div><div class="val" id="cot">--</div></div>
+            <div class="box"><div class="label">Position</div><div class="val" id="pos">--</div></div>
+            <div class="box"><div class="label">Saisonalität</div><div class="val" id="sea">--</div></div>
+            <div class="box"><div class="label">Kurve</div><div class="val" id="str">--</div></div>
         </div>
     </div>
     <script>
-        const assets = {
-            "Gold": { t: "GC=F", c: "+150k", ch: "-2k" },
-            "Rohöl": { t: "CL=F", c: "+210k", ch: "+10k" },
-            "Silber": { t: "SI=F", c: "+45k", ch: "-1k" },
-            "Kupfer": { t: "HG=F", c: "+80k", ch: "+3k" },
-            "Erdgas": { t: "NG=F", c: "-20k", ch: "+5k" },
-            "Soja": { t: "ZS=F", c: "+60k", ch: "-4k" },
-            "Mais": { t: "ZC=F", c: "+110k", ch: "+2k" },
-            "Weizen": { t: "ZW=F", c: "-30k", ch: "-1k" },
-            "Kaffee": { t: "KC=F", c: "+55k", ch: "+4k" },
-            "Kakao": { t: "CC=F", c: "-15k", ch: "-2k" },
-            "Zucker": { t: "SB=F", c: "+40k", ch: "+1k" }
+        const db = {
+            "Gold": { c: "41/100", p: "Net-Short", s: "Bärisch", k: "Contango" },
+            "Rohöl": { c: "54/100", p: "Net-Long", s: "Bullisch", k: "Backwardation" },
+            "Silber": { c: "38/100", p: "Net-Short", s: "Bärisch", k: "Contango" },
+            "Kupfer": { c: "68/100", p: "Net-Long", s: "Bullisch", k: "Backwardation" },
+            "Erdgas": { c: "76/100", p: "Net-Long", s: "Neutral", k: "Contango" },
+            "Soja": { c: "72/100", p: "Net-Long", s: "Neutral", k: "Contango" },
+            "Mais": { c: "51/100", p: "Neutral", s: "Bärisch", k: "Contango" },
+            "Weizen": { c: "49/100", p: "Neutral", s: "Bärisch", k: "Contango" },
+            "Kaffee": { c: "73/100", p: "Net-Long", s: "Bullisch", k: "Backwardation" },
+            "Kakao": { c: "36/100", p: "Net-Short", s: "Neutral", k: "Backwardation" },
+            "Zucker": { c: "58/100", p: "Net-Long", s: "Bullisch", k: "Contango" }
         };
         const sel = document.getElementById('sel');
-        Object.keys(assets).forEach(k => sel.innerHTML += `<option value="${k}">${k}</option>`);
-        
-        const chart = LightweightCharts.createChart(document.getElementById('chart'), { width: 418, height: 220, layout: { background: { color: '#000' }, textColor: '#fff' }});
+        Object.keys(db).forEach(k => sel.innerHTML += `<option value="${k}">${k}</option>`);
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), { width: 418, height: 220, layout: { background: { color: '#000' } }});
         const cs = chart.addCandlestickSeries();
-
-        async function update() {
-            const v = assets[sel.value];
+        cs.setData([{time:'2026-06-20', open:100, high:110, low:90, close:105}]);
+        function upd() {
+            const v = db[sel.value];
             document.getElementById('cot').innerText = v.c;
-            document.getElementById('chg').innerText = v.ch;
-            const res = await fetch(`https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${v.t}?interval=1d&range=1mo`);
-            const d = await res.json();
-            const q = d.chart.result[0].indicators.quote[0];
-            cs.setData(q.close.map((c, i) => ({ time: d.chart.result[0].timestamp[i], open: q.open[i], high: q.high[i], low: q.low[i], close: c })));
+            document.getElementById('pos').innerText = v.p;
+            document.getElementById('sea').innerText = v.s;
+            document.getElementById('str').innerText = v.k;
         }
-        update();
+        upd();
     </script>
 </body>
 </html>
