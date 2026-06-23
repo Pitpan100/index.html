@@ -1,80 +1,74 @@
 {
     "GC=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Bullisch (Sommer-Rallye)"
+        "inventories": "Keine Daten",
+        "seasonality": "Neutral (Saisonales Sommerloch)"
     },
     "CL=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Bullisch (Driving Season)"
+        "inventories": "Keine Daten",
+        "seasonality": "Bullisch (Driving Season / Sommerpeak)"
     },
     "SI=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Neutral"
+        "inventories": "Keine Daten",
+        "seasonality": "Neutral (Saisonales Sommerloch)"
     },
     "HG=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Moderat Bärisch"
+        "inventories": "Keine Daten",
+        "seasonality": "Saisonal Neutral / Zyklisch"
     },
     "NG=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Volatil / Neutral"
+        "inventories": "Keine Daten",
+        "seasonality": "Moderat Bullisch (Klimaanlagen-Bedarf)"
     },
     "ZS=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Bullisch (Wachstumsphase)"
+        "inventories": "Keine Daten",
+        "seasonality": "Volatil (Wetter-Risiko / Wachstumsphase)"
     },
     "ZC=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Volatil (Wetter-Risiko)"
+        "inventories": "Keine Daten",
+        "seasonality": "Volatil (Wetter-Risiko / Wachstumsphase)"
     },
     "ZW=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Bärisch (Erntephase)"
+        "inventories": "Keine Daten",
+        "seasonality": "Bärisch (Globale Haupterntephase)"
     },
     "KC=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Neutral / Fest"
+        "inventories": "Keine Daten",
+        "seasonality": "Saisonal Neutral / Zyklisch"
     },
     "CC=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Hohe Volatilität"
+        "inventories": "Keine Daten",
+        "seasonality": "Saisonal Neutral / Zyklisch"
     },
     "LE=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Neutral"
-    },
-    "LBS=F": {
-        "cot_score": "N/A",
-        "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Moderat Bärisch"
+        "inventories": "Keine Daten",
+        "seasonality": "Saisonal Neutral / Zyklisch"
     },
     "HO=F": {
-        "cot_score": "N/A",
+        "cot_score": "50% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "Keine aktuellen Daten",
-        "seasonality": "Saisonal Neutral"
+        "inventories": "Keine Daten",
+        "seasonality": "Bullisch (Driving Season / Sommerpeak)"
     }
 }
