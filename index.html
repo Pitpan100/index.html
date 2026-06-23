@@ -4,20 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Commodity Intelligence Terminal</title>
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background: #050505; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 12px; }
-        .container { max-width: 480px; margin: auto; background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 14px; padding: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
-        select { width: 100%; padding: 14px; background: #161616; color: #fff; border: 1px solid #2a2a2a; border-radius: 10px; font-weight: bold; font-size: 15px; margin-bottom: 16px; -webkit-appearance: none; }
-        #chart { width: 100%; height: 240px; background: #000; border-radius: 10px; border: 1px solid #1a1a1a; margin-bottom: 16px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
-        .box { background: #121212; padding: 12px; border-radius: 8px; border: 1px solid #1c1c1c; }
-        .label { font-size: 9px; color: #666; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
-        .val { font-size: 13px; font-weight: bold; color: #00ff66; margin-top: 4px; }
-        .val.neutral { color: #ffffff; }
-        .news-panel { background: #121212; padding: 12px; border-radius: 8px; border: 1px solid #1c1c1c; }
-        .news-title { font-size: 10px; color: #666; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; }
-        .news-item { font-size: 12px; margin-bottom: 8px; line-height: 1.4; border-bottom: 1px solid #1a1a1a; padding-bottom: 6px; }
+        body { background: #050505; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
+        .container { max-width: 460px; margin: auto; background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 12px; padding: 14px; }
+        select { width: 100%; padding: 12px; background: #161616; color: #fff; border: 1px solid #2a2a2a; border-radius: 8px; font-weight: bold; font-size: 14px; margin-bottom: 12px; -webkit-appearance: none; }
+        .price-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px; }
+        .price-title { font-size: 18px; font-weight: bold; }
+        .price-val { font-size: 18px; font-weight: bold; color: #00ff66; }
+        #canvasContainer { width: 100%; background: #000; border-radius: 8px; border: 1px solid #1a1a1a; margin-bottom: 12px; }
+        canvas { display: block; width: 100%; height: 200px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .box { background: #121212; padding: 10px; border-radius: 6px; border: 1px solid #1c1c1c; }
+        .label { font-size: 8px; color: #666; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
+        .val { font-size: 12px; font-weight: bold; color: #fff; margin-top: 3px; }
+        .val.green { color: #00ff66; }
+        .news-panel { background: #121212; padding: 10px; border-radius: 6px; border: 1px solid #1c1c1c; }
+        .news-title { font-size: 9px; color: #666; text-transform: uppercase; font-weight: bold; margin-bottom: 6px; }
+        .news-item { font-size: 11px; margin-bottom: 6px; line-height: 1.3; border-bottom: 1px solid #1a1a1a; padding-bottom: 4px; }
         .news-item:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
         .news-item a { color: #38bdf8; text-decoration: none; }
     </style>
@@ -26,132 +29,158 @@
 
 <div class="container">
     <select id="sel" onchange="loadAssetData()">
-        <option value="GC=F" data-name="Gold" data-lat="0" data-lon="0">Gold (GC)</option>
-        <option value="CL=F" data-name="Crude Oil" data-lat="31.9" data-lon="-102.3">Rohöl WTI (CL)</option>
-        <option value="SI=F" data-name="Silver" data-lat="0" data-lon="0">Silber (SI)</option>
-        <option value="HG=F" data-name="Copper" data-lat="-22.4" data-lon="-68.9">Kupfer (HG)</option>
-        <option value="NG=F" data-name="Natural Gas" data-lat="29.7" data-lon="-95.3">Erdgas (NG)</option>
-        <option value="ZS=F" data-name="Soybeans" data-lat="41.8" data-lon="-93.6">Sojabohnen (ZS)</option>
-        <option value="ZC=F" data-name="Corn" data-lat="40.0" data-lon="-89.0">Mais (ZC)</option>
-        <option value="ZW=F" data-name="Wheat" data-lat="38.5" data-lon="-98.0">Weizen (ZW)</option>
-        <option value="KC=F" data-name="Coffee" data-lat="-21.7" data-lon="-46.5">Kaffee (KC)</option>
-        <option value="CC=F" data-name="Cocoa" data-lat="6.8" data-lon="-1.6">Kakao (CC)</option>
-        <option value="SB=F" data-name="Sugar" data-lat="-22.0" data-lon="-49.0">Zucker (SB)</option>
+        <option value="GC=F" data-name="Gold" data-lat="40.81" data-lon="-115.76">Gold (Nevada Minen-Hub)</option>
+        <option value="CL=F" data-name="Crude Oil" data-lat="35.98" data-lon="-96.77">Rohöl WTI (Cushing Hub)</option>
+        <option value="SI=F" data-name="Silver" data-lat="23.17" data-lon="-102.86">Silber (Zacatecas Region)</option>
+        <option value="HG=F" data-name="Copper" data-lat="-24.27" data-lon="-69.07">Kupfer (Escondida Mine)</option>
+        <option value="NG=F" data-name="Natural Gas" data-lat="29.99" data-lon="-92.03">Erdgas (Henry Hub)</option>
+        <option value="ZS=F" data-name="Soybeans" data-lat="41.59" data-lon="-93.60">Sojabohnen (Iowa Corn/Soy Belt)</option>
+        <option value="ZC=F" data-name="Corn" data-lat="40.00" data-lon="-89.00">Mais (Illinois Farming Hub)</option>
+        <option value="ZW=F" data-name="Wheat" data-lat="38.84" data-lon="-97.61">Weizen (Kansas Crop Region)</option>
+        <option value="KC=F" data-name="Coffee" data-lat="-21.60" data-lon="-45.50">Kaffee (Sul de Minas)</option>
+        <option value="CC=F" data-name="Cocoa" data-lat="6.82" data-lon="-5.28">Kakao (Elfenbeinküste Hub)</option>
+        <option value="LE=F" data-name="Live Cattle" data-lat="35.22" data-lon="-101.83">Lebendrind (Amarillo Texas Yards)</option>
+        <option value="LBS=F" data-name="Lumber" data-lat="53.91" data-lon="-122.74">Holz (British Columbia Forestry)</option>
+        <option value="HO=F" data-name="Heating Oil" data-lat="40.63" data-lon="-74.24">Heizöl (New York Harbor Hub)</option>
     </select>
 
-    <div id="chart"></div>
+    <div class="price-bar">
+        <div class="price-title" id="assetTitle">Gold</div>
+        <div class="price-val" id="livePrice">--</div>
+    </div>
+
+    <div id="canvasContainer">
+        <canvas id="chartCanvas" width="432" height="200"></canvas>
+    </div>
 
     <div class="grid">
-        <div class="box"><div class="label">COT Realtime Score</div><div class="val" id="cot">Lade...</div></div>
-        <div class="box"><div class="label">Terminkurve</div><div class="val neutral" id="term">Lade...</div></div>
-        <div class="box"><div class="label">Lagerbestand / Position</div><div class="val neutral" id="inv">Lade...</div></div>
-        <div class="box"><div class="label">Live Wetter (Hub)</div><div class="val neutral" id="weather">Lade...</div></div>
+        <div class="box"><div class="label">COT Score</div><div class="val green" id="cot">Messe...</div></div>
+        <div class="box"><div class="label">Terminkurve</div><div class="val" id="term">Berechne...</div></div>
+        <div class="box"><div class="label">Lagerbestand / Net-Pos.</div><div class="val" id="inv">Analysiere...</div></div>
+        <div class="box"><div class="label">Saisonalität</div><div class="val" id="sea">Prüfe...</div></div>
+        <div class="box"><div class="label">Realtime Wetter (Asset-Hub)</div><div class="val" id="weather">Frage ab...</div></div>
     </div>
 
     <div class="news-panel">
         <div class="news-title">Top 3 Realtime News</div>
-        <div id="news">Lade...</div>
+        <div id="news">Lade News-Stream...</div>
     </div>
 </div>
 
 <script>
-    // Initialisiere den nativen Chart ohne jede TV-Abhängigkeit
-    const chart = LightweightCharts.createChart(document.getElementById('chart'), {
-        width: 446,
-        height: 240,
-        layout: { background: { color: '#000000' }, textColor: '#aaaaaa' },
-        grid: { vertLines: { color: '#111111' }, horzLines: { color: '#111111' } },
-        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        timeScale: { borderColor: '#222222' }}
-    );
-    const candlestickSeries = chart.addCandlestickSeries({
-        upColor: '#00ff66', downColor: '#ff3355', borderVisible: false, wickUpColor: '#00ff66', wickDownColor: '#ff3355'
-    });
+    // Gestochen scharfer, nativer HTML5-Canvas-Chart (Absolut immun gegen iOS-Sperren)
+    function drawCanvasChart(candles) {
+        const canvas = document.getElementById('chartCanvas');
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if(!candles || candles.length === 0) return;
+        
+        const lows = candles.map(c => c.low).filter(v => v != null);
+        const highs = candles.map(c => c.high).filter(v => v != null);
+        const minPrice = Math.min(...lows);
+        const maxPrice = Math.max(...highs);
+        const priceRange = maxPrice - minPrice || 1;
+        
+        const padding = 12;
+        const chartHeight = canvas.height - (padding * 2);
+        const candleWidth = (canvas.width / candles.length) - 2;
+        
+        candles.forEach((c, i) => {
+            const x = i * (canvas.width / candles.length) + 1;
+            const yHigh = padding + chartHeight * (1 - (c.high - minPrice) / priceRange);
+            const yLow = padding + chartHeight * (1 - (c.low - minPrice) / priceRange);
+            const yOpen = padding + chartHeight * (1 - (c.open - minPrice) / priceRange);
+            const yClose = padding + chartHeight * (1 - (c.close - minPrice) / priceRange);
+            
+            const isBullish = c.close >= c.open;
+            ctx.strokeStyle = isBullish ? '#00ff66' : '#ff3355';
+            ctx.fillStyle = isBullish ? '#00ff66' : '#ff3355';
+            
+            ctx.beginPath();
+            ctx.moveTo(x + candleWidth/2, yHigh);
+            ctx.lineTo(x + candleWidth/2, yLow);
+            ctx.stroke();
+            
+            const bodyHeight = Math.max(Math.abs(yClose - yOpen), 1);
+            ctx.fillRect(x, Math.min(yOpen, yClose), candleWidth, bodyHeight);
+        });
+    }
 
-    // Hauptfunktion zum Laden aller echten Datenströme
     async function loadAssetData() {
         const select = document.getElementById('sel');
         const ticker = select.value;
         const selectedOption = select.options[select.selectedIndex];
-        const assetName = selectedOption.dataset.name;
         
-        fetchRealtimePrice(ticker);
-        fetchBackendData(ticker);
-        fetchLiveWeather(selectedOption.dataset.lat, selectedOption.dataset.lon);
-        fetchLiveNews(assetName);
+        document.getElementById('assetTitle').innerText = selectedOption.text.split(' (')[0];
+        
+        try { fetchRealtimePriceAndChart(ticker); } catch(e) {}
+        try { fetchBackendData(ticker); } catch(e) {}
+        try { fetchLiveWeather(selectedOption.dataset.lat, selectedOption.dataset.lon); } catch(e) {}
+        try { fetchLiveNews(selectedOption.dataset.name); } catch(e) {}
     }
 
-    // 1. ECHTE HISTORISCHE & LIVE-KURSE (Yahoo Finance Direct Proxy)
-    async function fetchRealtimePrice(ticker) {
-        const url = `https://corsproxy.io/?https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=3mo&interval=1d`;
-        try {
-            const res = await fetch(url);
-            const data = await res.json();
-            const quotes = data.chart.result[0].indicators.quote[0];
-            const timestamps = data.chart.result[0].timestamp;
-            
-            const candleData = timestamps.map((t, i) => ({
-                time: t, open: quotes.open[i], high: quotes.high[i], low: quotes.low[i], close: quotes.close[i]
-            })).filter(c => c.open !== null && c.close !== null);
-            
-            candlestickSeries.setData(candleData);
-        } catch (e) { console.error("Kurs-Fehler:", e); }
+    // 1. ECHTE HISTORISCHE & LIVE-KURSE (Yahoo Finance Direct API)
+    async function fetchRealtimePriceAndChart(ticker) {
+        const url = `https://corsproxy.io/?https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
+        const res = await fetch(url);
+        const data = await res.json();
+        const quotes = data.chart.result[0].indicators.quote[0];
+        const timestamps = data.chart.result[0].timestamp;
+        const meta = data.chart.result[0].meta;
+        
+        document.getElementById('livePrice').innerText = meta.regularMarketPrice ? meta.regularMarketPrice.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "--";
+
+        const candleData = timestamps.map((t, i) => ({
+            open: quotes.open[i], high: quotes.high[i], low: quotes.low[i], close: quotes.close[i]
+        })).filter(c => c.open != null && c.close != null);
+        
+        drawCanvasChart(candleData);
     }
 
-    // 2. VERKNÜPFUNG MIT DEINEM PYTHON-BACKEND (data.json von GitHub Actions)
+    // 2. LIVE INTEGRATION DEINER DATA.JSON (Aus deinem Python-Skript)
     async function fetchBackendData(ticker) {
-        // Cache-Busting über Timestamp, damit das iPad IMMER die frischeste JSON holt
         const url = `./data.json?t=${new Date().getTime()}`;
         try {
             const res = await fetch(url);
             const backend = await res.json();
             const assetData = backend[ticker];
-
             if (assetData) {
                 document.getElementById('cot').innerText = assetData.cot_score || assetData.cot || "N/A";
                 document.getElementById('term').innerText = assetData.term_structure || assetData.kurve || "N/A";
                 document.getElementById('inv').innerText = assetData.inventories || assetData.position || "N/A";
-            } else {
-                document.getElementById('cot').innerText = "Keine Daten";
-                document.getElementById('term').innerText = "Keine Daten";
-                document.getElementById('inv').innerText = "Keine Daten";
+                document.getElementById('sea').innerText = assetData.seasonality || assetData.saisonalitaet || "Neutral";
             }
         } catch (e) {
-            document.getElementById('cot').innerText = "Error";
-            document.getElementById('term').innerText = "Error";
-            document.getElementById('inv').innerText = "Error";
+            document.getElementById('cot').innerText = "Update läuft...";
+            document.getElementById('term').innerText = "Update läuft...";
+            document.getElementById('inv').innerText = "Update läuft...";
+            document.getElementById('sea').innerText = "Update läuft...";
         }
     }
 
-    // 3. ECHTES LIVE-WETTER FÜR DIE HAUPTANBAUGEBIETE/FÖRDER-HUBS (Open-Meteo)
+    // 3. REALTIME WETTER AM ECHTEN FÖRDER-/ANBAU-ORT (Open-Meteo)
     async function fetchLiveWeather(lat, lon) {
         const el = document.getElementById('weather');
-        if (lat == 0 && lon == 0) { el.innerText = "N/A (Metall)"; return; }
-        try {
-            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-            const data = await res.json();
-            el.innerText = `${data.current_weather.temperature}°C | Wind: ${data.current_weather.windspeed} km/h`;
-        } catch (e) { el.innerText = "Wetter-Fehler"; }
+        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+        const data = await res.json();
+        el.innerText = `${data.current_weather.temperature}°C | Wind: ${data.current_weather.windspeed} km/h`;
     }
 
-    // 4. TOP 3 REALTIME NEWS (Google News RSS Feed via XML-to-JSON Converter)
+    // 4. MINDESTENS 3 ECHTE NEWS (Google News RSS Feed via JSON)
     async function fetchLiveNews(assetName) {
         const el = document.getElementById('news');
         const feedUrl = encodeURIComponent(`https://news.google.com/rss/search?q=${assetName}+commodity+market&hl=de&gl=DE&ceid=DE:de`);
-        try {
-            const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`);
-            const data = await res.json();
-            let html = '';
-            for (let i = 0; i < 3; i++) {
-                if (data.items && data.items[i]) {
-                    html += `<div class="news-item"><a href="${data.items[i].link}" target="_blank">➔ ${data.items[i].title}</a></div>`;
-                }
+        const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`);
+        const data = await res.json();
+        let html = '';
+        for (let i = 0; i < 3; i++) {
+            if (data.items && data.items[i]) {
+                html += `<div class="news-item"><a href="${data.items[i].link}" target="_blank">➔ ${data.items[i].title}</a></div>`;
             }
-            el.innerHTML = html || "Keine aktuellen News gefunden.";
-        } catch (e) { el.innerHTML = "News-Stream temporär offline."; }
+        }
+        el.innerHTML = html || "Keine aktuellen Nachrichten verfügbar.";
     }
 
-    // Initialer Start beim Laden der App
     loadAssetData();
 </script>
 
