@@ -31,7 +31,6 @@
             overflow: hidden;
         }
 
-        /* Top Navigation / Asset Selector */
         header {
             display: flex;
             align-items: center;
@@ -64,7 +63,6 @@
             font-weight: 600;
         }
 
-        /* Main Dashboard Grid */
         .dashboard-grid {
             display: grid;
             grid-template-columns: 3fr 1fr;
@@ -74,7 +72,6 @@
             min-height: 0;
         }
 
-        /* Left Side: Main Chart Container */
         .chart-container {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
@@ -83,7 +80,6 @@
             position: relative;
         }
 
-        /* Right Side: Sidebar for Widgets (Weather & News) */
         .sidebar {
             display: flex;
             flex-direction: column;
@@ -118,7 +114,6 @@
             border-radius: 4px;
         }
 
-        /* Bottom Metrics Row */
         .metrics-row {
             grid-column: span 2;
             display: grid;
@@ -152,7 +147,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Responsive overrides for smaller iPads */
         @media (max-width: 1024px) {
             .dashboard-grid {
                 grid-template-columns: 1fr;
@@ -192,8 +186,7 @@
     </header>
 
     <div class="dashboard-grid">
-        <div class="chart-container" id="tv-chart-wrapper">
-            </div>
+        <div class="chart-container" id="tv-chart-wrapper"></div>
 
         <div class="sidebar">
             <div class="widget-box">
@@ -230,9 +223,7 @@
     <script>
         let globalData = {};
 
-        // Initalisiert den TradingView Chart dynamisch
         function initTradingView(symbol) {
-            // Mapping für saubere TradingView-Ticker-Symbole
             let tvSymbol = "COMEX:GC1!";
             if(symbol === "CL=F") tvSymbol = "NYMEX:CL1!";
             if(symbol === "SI=F") tvSymbol = "COMEX:SI1!";
@@ -243,7 +234,7 @@
             if(symbol === "ZW=F") tvSymbol = "CBOT:ZW1!";
             if(symbol === "KC=F") tvSymbol = "ICEUS:KC1!";
             if(symbol === "CC=F") tvSymbol = "ICEUS:CC1!";
-            if(symbol === "LE=F") tvSymbol = "CME:LE1!";
+            if(symbol === "LE=F") tvSymbol = "CME:LC1!"; // Korrigiert: Verhindert den AAPL-Fallback
             if(symbol === "HO=F") tvSymbol = "NYMEX:HO1!";
 
             document.getElementById('tv-chart-wrapper').innerHTML = '<div id="tradingview_widget"></div>';
@@ -269,7 +260,6 @@
             });
         }
 
-        // Aktualisiert die Anzeige und wendet die intelligente Einfärbung an
         function updateMetrics(ticker) {
             const assetData = globalData[ticker];
             
@@ -281,7 +271,7 @@
                 return;
             }
 
-            // 1. COT Score einfärben
+            // 1. COT Score einfärben & glühen lassen
             const cotElem = document.getElementById('cot-score');
             cotElem.innerText = assetData.cot_score;
             if (assetData.cot_score.includes('Optimistisch')) {
@@ -329,20 +319,16 @@
             }
         }
 
-        // Wird aufgerufen, wenn der Benutzer ein anderes Asset wählt
         function changeAsset(ticker) {
             initTradingView(ticker);
             updateMetrics(ticker);
         }
 
-        // Initialer Datenabruf beim Laden der Seite
         async function loadDashboardData() {
             try {
-                // Holt die von GitHub Actions generierte JSON-Datenbank
                 const response = await fetch('data.json?cache_buster=' + Date.now());
                 globalData = await response.json();
                 
-                // Starte standardmäßig mit Gold
                 const defaultAsset = document.getElementById('asset-picker').value;
                 changeAsset(defaultAsset);
             } catch (error) {
@@ -351,7 +337,6 @@
             }
         }
 
-        // Starten
         window.onload = loadDashboardData;
     </script>
 </body>
