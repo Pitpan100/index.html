@@ -3,7 +3,6 @@ import requests
 import json
 import datetime
 
-# Zuordnungs-Matrix für API-Abgleich und Identifikation
 ASSETS = {
     "GC=F": {"cftc_name": "GOLD - COMMODITY EXCHANGE INC.", "name": "Gold"},
     "CL=F": {"cftc_name": "CRUDE OIL, LIGHT SWEET - NEW YORK MERCANTILE EXCHANGE", "name": "Rohöl WTI"},
@@ -20,8 +19,7 @@ ASSETS = {
 }
 
 def get_dynamic_seasonality(ticker, month):
-    """Berechnet den saisonalen Zyklus exakt basierend auf dem aktuellen Monat."""
-    # Energie-Komplex
+    """Berechnet den saisonalen Zyklus basierend auf dem aktuellen Monat."""
     if ticker in ["CL=F", "HO=F"]:
         if month in [5, 6, 7, 8]:
             return "Bullisch (Driving Season / Sommerpeak)"
@@ -30,7 +28,6 @@ def get_dynamic_seasonality(ticker, month):
         else:
             return "Moderat Bullisch (Winter-Heizbedarf)"
             
-    # Erdgas (Sehr spezifisch)
     elif ticker == "NG=F":
         if month in [11, 12, 1, 2]:
             return "Stark Volatil (Winter-Heiz-Peak)"
@@ -39,7 +36,6 @@ def get_dynamic_seasonality(ticker, month):
         else:
             return "Moderat Bullisch (Klimaanlagen-Bedarf)"
             
-    # Edelmetalle
     elif ticker in ["GC=F", "SI=F"]:
         if month in [1, 2, 8, 9]:
             return "Bullisch (Saisonale Herbst- & Neujahrs-Rallye)"
@@ -48,7 +44,6 @@ def get_dynamic_seasonality(ticker, month):
         else:
             return "Saisonal Stabil / Seitwärts"
             
-    # Agrar (Mais & Soja)
     elif ticker in ["ZC=F", "ZS=F"]:
         if month in [5, 6, 7]:
             return "Volatil (Wetter-Risiko / Wachstumsphase)"
@@ -57,7 +52,6 @@ def get_dynamic_seasonality(ticker, month):
         else:
             return "Saisonal Neutral"
             
-    # Weizen
     elif ticker == "ZW=F":
         if month in [6, 7, 8]:
             return "Bärisch (Globale Haupterntephase)"
@@ -69,7 +63,7 @@ def get_dynamic_seasonality(ticker, month):
     return "Saisonal Neutral / Zyklisch"
 
 def fetch_socrata_cot():
-    """Holt Daten direkt vom unblockierten, offiziellen CFTC Entwickler-Endpoint."""
+    """Holt die neuesten Meldungen über den unblockierten Regierungs-API-Endpoint."""
     url = "https://publicreporting.cftc.gov/resource/jun7-fc8e.json?$order=report_date_as_yyyy_mm_dd DESC&$limit=500"
     try:
         headers = {'User-Agent': 'Mozilla/5.0'}
@@ -104,7 +98,6 @@ def main():
     cot_records = fetch_socrata_cot()
     current_month = datetime.datetime.now().month
     
-    # Mappen der Rohdaten
     cot_map = {}
     for record in cot_records:
         market_name = record.get("contract_market_name", "").strip()
@@ -118,8 +111,7 @@ def main():
         term_struct = get_term_structure(ticker)
         seasonality_text = get_dynamic_seasonality(ticker, current_month)
         
-        # Standardwerte definieren (Falls Daten verzögert eintreffen)
-        cot_score = "50 (Neutral)"
+        cot_score = "50% (Neutral)"
         inventories = "Keine Daten"
         
         if cftc_name in cot_map:
@@ -149,7 +141,6 @@ def main():
             "seasonality": seasonality_text
         }
         
-    # Generiere finale JSON-Datei
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(output_data, f, indent=4, ensure_ascii=False)
         
