@@ -3,108 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Commodity Intelligence Hub</title>
+    <title>Commodity Intelligence</title>
     <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #0b0f19; color: #f3f4f6; margin: 0; padding: 16px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; width: 100%; max-width: 380px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
-        
-        .ticker-wrap { background: #020617; border: 1px solid #ef4444; border-radius: 8px; padding: 6px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; font-size: 11px; font-weight: bold; color: #f87171; display: none; cursor: pointer; position: relative; width: 100%; height: 27px; }
-        .ticker { display: inline-block; position: absolute; white-space: nowrap; will-change: transform; left: 0; top: 50%; transform: translateY(-50%); }
-
-        .header { border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px; text-align: center; }
-        .header h1 { font-size: 19px; font-weight: 800; color: #fbbf24; margin: 0 0 4px 0; }
-        .header p { font-size: 11px; color: #94a3b8; margin: 0; }
-        
-        .select-container { margin-bottom: 16px; width: 100%; background-color: #1e293b; border: 1px solid #334155; border-radius: 10px; display: table; position: relative; }
-        .select-cell { display: table-cell; vertical-align: middle; }
-        .styled-select { width: 100%; background: transparent; border: none; color: #f1f5f9; padding: 12px 0px 12px 16px; font-size: 14px; font-weight: bold; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; display: block; }
-        .arrow-cell { display: table-cell; vertical-align: middle; width: 40px; text-align: center; color: #fbbf24; font-size: 10px; pointer-events: none; }
-        
-        .price-box { background-color: #020617; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 12px; }
-        .commodity-name { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-        .price-display { font-size: 28px; font-weight: 900; color: #34d399; }
-        
-        .chart-container { width: 100%; height: 130px; background-color: #020617; border-radius: 12px; margin-bottom: 12px; overflow: hidden; border: 1px solid #1e293b; }
-        canvas { display: block; width: 100%; height: 100%; }
-
-        .news-container { background-color: #020617; border: 1px solid #1e293b; border-radius: 12px; padding: 12px; margin-bottom: 12px; }
-        .news-title { font-size: 11px; color: #fbbf24; text-transform: uppercase; font-weight: bold; letter-spacing: 0.05em; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
-        .news-list { margin: 0; padding-left: 14px; font-size: 11.5px; color: #cbd5e1; line-height: 1.5; }
-        
-        .data-container { background-color: #020617; border-radius: 12px; padding: 4px 16px; }
-        .data-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
-        .label { color: #94a3b8; }
-        .value { font-weight: 700; }
+        body { background: #0b0f19; color: #f3f4f6; font-family: -apple-system, sans-serif; margin: 0; padding: 16px; }
+        .card { background: #0f172a; border-radius: 16px; padding: 20px; border: 1px solid #1e293b; max-width: 400px; margin: auto; }
+        .price-display { font-size: 32px; font-weight: 900; color: #34d399; margin: 10px 0; }
+        #chartCanvas { width: 100%; height: 150px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; }
+        .news-box { font-size: 13px; color: #cbd5e1; margin-top: 15px; }
+        .data-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div class="ticker-wrap" id="alert-wrap" onclick="toggleTicker()"><div class="ticker" id="alert-ticker"></div></div>
-        <div class="header"><h1>Commodity Intelligence</h1><p>100% Autark via CFTC, Yahoo & Weather</p></div>
-        <div class="select-container"><div class="select-cell"><select class="styled-select" id="asset-select" onchange="selectTicker()"></select></div><div class="arrow-cell">▼</div></div>
-        <div class="price-box"><div class="commodity-name" id="comm-name">Lade Asset...</div><div class="price-display" id="comm-price">0.00 USD</div></div>
-        <div class="chart-container"><canvas id="cryptoCanvas"></canvas></div>
-        <div class="news-container"><div class="news-title">📰 Aktuelle News & Brennpunkte</div><ul class="news-list" id="news-box"></ul></div>
-        <div class="data-container">
-            <div class="data-row"><span class="label">Commercial COT Score:</span><span class="value" id="cot-score">--</span></div>
-            <div class="data-row"><span class="label">Positionierung:</span><span class="value" id="cot-pos">--</span></div>
-            <div class="data-row"><span class="label">COT Saisonalität:</span><span class="value" id="cot-season" style="color: #fbbf24;">--</span></div>
-            <div class="data-row"><span class="label">Terminkurve (Futures):</span><span class="value" id="term-structure">--</span></div>
-            <div class="data-row"><span class="label">Einfluss / Makro:</span><span class="value" id="weather-impact">--</span></div>
-        </div>
+        <select id="asset-select" onchange="updateData()" style="width:100%; padding:10px; background:#1e293b; color:white; border-radius:8px; border:none;"></select>
+        <div id="comm-price" class="price-display">Lade...</div>
+        <canvas id="chartCanvas"></canvas>
+        <div id="news-box" class="news-box"></div>
+        <div id="stats"></div>
     </div>
 
     <script>
-        const assetNews = { "CL=F": ["OPEC+ signalisiert Förderkürzungen.", "Geopolitische Risiken stützen Ölpreis."], "NG=F": ["Hitze treibt AC-Nachfrage.", "Lagerbestände über Durchschnitt."], "GC=F": ["Zentralbanken kaufen Gold.", "Fed-Zinspolitik bleibt Fokus."], "SI=F": ["Industrielle Nachfrage wächst.", "Lagerbestände niedrig."], "HG=F": ["Minenschließungen verknappen Angebot.", "KI-Rechenzentren stützen Nachfrage."], "ZW=F": ["Trockenheit in Russland belastet.", "USDA sieht niedrige Endbestände."], "ZC=F": ["Gute Aussaat in USA.", "Starke Konkurrenz aus Brasilien."], "ZS=F": ["Rekordernte in Südamerika.", "Biodiesel-Nachfrage stabil."], "KC=F": ["Ernteausfälle in Vietnam.", "Geringe ICE-Lagerbestände."], "CC=F": ["Defizit in Westafrika bleibt.", "Hohe Preise belasten Verarbeitung."], "LE=F": ["Kleiner US-Rinderbestand.", "Robuste Inlandsnachfrage."], "LBS=F": ["Immobilienmarkt bremst Nachfrage.", "Brandrisiko in Kanada."], "HO=F": ["Raffinerie-Wartungen aktuell.", "Crack-Spread-Dynamik positiv."] };
-        const fallbackPrices = { "CL=F": 74.20, "NG=F": 2.45, "GC=F": 4157.50, "SI=F": 65.15, "HG=F": 6.385, "ZW=F": 610.00, "ZC=F": 445.00, "ZS=F": 1120.00, "KC=F": 220.00, "CC=F": 8450.00, "LE=F": 182.40, "LBS=F": 465.00, "HO=F": 2.25 };
-        const defaultMetaData = { "CL=F": { name: "Rohöl (Crude Oil)", cotScore: 54, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" }, "NG=F": { name: "Erdgas (Nat Gas)", cotScore: 76, position: "Net-Long", seasonality: "Neutral", structure: "Contango" }, "GC=F": { name: "Gold", cotScore: 41, position: "Net-Short", seasonality: "Bärisch", structure: "Contango" }, "SI=F": { name: "Silber (Silver)", cotScore: 38, position: "Net-Short", seasonality: "Bärisch", structure: "Contango" }, "HG=F": { name: "Kupfer (Copper)", cotScore: 68, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" }, "ZW=F": { name: "Weizen (Wheat)", cotScore: 49, position: "Neutral", seasonality: "Bärisch", structure: "Contango" }, "ZC=F": { name: "Mais (Corn)", cotScore: 51, position: "Neutral", seasonality: "Bärisch", structure: "Contango" }, "ZS=F": { name: "Sojabohnen (Soybeans)", cotScore: 72, position: "Net-Long", seasonality: "Neutral", structure: "Contango" }, "KC=F": { name: "Kaffee (Coffee)", cotScore: 73, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" }, "CC=F": { name: "Kakao (Cocoa)", cotScore: 36, position: "Net-Short", seasonality: "Neutral", structure: "Backwardation" }, "LE=F": { name: "Lebendrind (Live Cattle)", cotScore: 58, position: "Net-Long", seasonality: "Bullisch", structure: "Contango" }, "LBS=F": { name: "Holz (Lumber)", cotScore: 42, position: "Neutral", seasonality: "Neutral", structure: "Contango" }, "HO=F": { name: "Heizöl (Heating Oil)", cotScore: 61, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" } };
-
-        let currentTicker = Object.keys(defaultMetaData)[0];
-
-        async function fetchPrice(ticker) {
+        const assets = { "GC=F": "Gold", "SI=F": "Silber", "CL=F": "Rohöl" };
+        
+        async function updateData() {
+            const ticker = document.getElementById('asset-select').value;
+            const priceEl = document.getElementById('comm-price');
+            
+            // Proxy für PWA-Modus (umgeht Apple-Blockade)
+            const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
+            
             try {
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + ticker + '?range=30d&interval=1d')}`;
-                const res = await fetch(proxyUrl);
-                const data = await res.json();
-                if (data?.chart?.result?.[0]) {
-                    const meta = data.chart.result[0].meta;
-                    document.getElementById('comm-price').innerText = meta.regularMarketPrice.toFixed(2) + " " + meta.currency;
-                    drawNativeChart(data.chart.result[0].indicators.quote[0]);
-                }
-            } catch {
-                document.getElementById('comm-price').innerText = fallbackPrices[ticker] + " USD";
+                const res = await fetch(url);
+                const json = await res.json();
+                const quote = json.chart.result[0].indicators.quote[0];
+                const price = json.chart.result[0].meta.regularMarketPrice;
+                
+                priceEl.innerText = price.toFixed(2) + " USD";
+                drawChart(quote.close);
+            } catch(e) {
+                priceEl.innerText = "Fehler / Offline";
             }
         }
 
-        function drawNativeChart(q) {
-            const canvas = document.getElementById('cryptoCanvas');
+        function drawChart(data) {
+            const canvas = document.getElementById('chartCanvas');
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            // Einfache Visualisierung
-            ctx.fillStyle = '#34d399';
-            q.close.forEach((c, i) => ctx.fillRect(i * 10, 100 - (c / 10), 8, 5));
+            ctx.strokeStyle = "#34d399";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            const step = canvas.width / data.length;
+            data.forEach((val, i) => {
+                const y = canvas.height - ((val - Math.min(...data)) / (Math.max(...data) - Math.min(...data)) * canvas.height);
+                i === 0 ? ctx.moveTo(i * step, y) : ctx.lineTo(i * step, y);
+            });
+            ctx.stroke();
         }
 
-        function updateUI() {
-            const m = defaultMetaData[currentTicker];
-            document.getElementById('comm-name').innerText = m.name;
-            document.getElementById('cot-score').innerText = m.cotScore + "/100";
-            document.getElementById('cot-pos').innerText = m.position;
-            document.getElementById('cot-season').innerText = m.seasonality;
-            document.getElementById('term-structure').innerText = m.structure;
-            document.getElementById('news-box').innerHTML = assetNews[currentTicker].map(n => `<li>${n}</li>`).join('');
-            fetchPrice(currentTicker);
-        }
-
-        function selectTicker() { currentTicker = document.getElementById('asset-select').value; updateUI(); }
-        
-        Object.keys(defaultMetaData).forEach(t => {
-            const opt = document.createElement('option');
-            opt.value = t; opt.innerText = defaultMetaData[t].name;
-            document.getElementById('asset-select').appendChild(opt);
-        });
-        updateUI();
+        // Dropdown füllen
+        const sel = document.getElementById('asset-select');
+        for (let t in assets) sel.innerHTML += `<option value="${t}">${assets[t]}</option>`;
+        updateData();
     </script>
 </body>
 </html>
