@@ -3,63 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Commodity Dashboard</title>
+    <title>Ultimate Realtime Terminal</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body { background: #000; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
-        .card { max-width: 450px; margin: auto; background: #0a0a0a; border: 1px solid #222; border-radius: 12px; padding: 15px; }
+        .card { max-width: 500px; margin: auto; background: #0a0a0a; border: 1px solid #222; border-radius: 12px; padding: 15px; }
         select { width: 100%; padding: 12px; background: #111; color: #fff; border: 1px solid #444; border-radius: 8px; font-weight: bold; margin-bottom: 15px; }
-        #chart { width: 100%; height: 220px; background: #000; border-radius: 8px; border: 1px solid #222; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .box { background: #111; padding: 10px; border-radius: 6px; text-align: center; border: 1px solid #222; }
-        .label { font-size: 8px; color: #666; text-transform: uppercase; }
-        .val { font-size: 13px; font-weight: bold; color: #fff; margin-top: 3px; }
+        #chart { width: 100%; height: 250px; background: #000; border-radius: 8px; border: 1px solid #222; margin-bottom: 15px;}
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        .box { background: #111; padding: 10px; border-radius: 6px; border: 1px solid #222; }
+        .label { font-size: 9px; color: #888; text-transform: uppercase; }
+        .val { font-size: 13px; font-weight: bold; margin-top: 4px; color: #0f0; }
+        .val.neutral { color: #fff; }
+        .news-box { background: #111; padding: 10px; border-radius: 6px; border: 1px solid #222; font-size: 11px; }
+        .news-item { margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .news-item a { color: #4da6ff; text-decoration: none; }
     </style>
 </head>
 <body>
     <div class="card">
-        <select id="sel" onchange="upd()">
-            <option value="Gold">Gold</option><option value="Rohöl">Rohöl</option><option value="Silber">Silber</option>
-            <option value="Kupfer">Kupfer</option><option value="Erdgas">Erdgas</option><option value="Soja">Soja</option>
-            <option value="Mais">Mais</option><option value="Weizen">Weizen</option><option value="Kaffee">Kaffee</option>
-            <option value="Kakao">Kakao</option><option value="Zucker">Zucker</option>
+        <select id="sel" onchange="loadAllData()">
+            <option value="GC=F" data-name="Gold" data-lat="0" data-lon="0">Gold (GC)</option>
+            <option value="CL=F" data-name="Crude Oil" data-lat="31.9" data-lon="-102.3">Rohöl (WTI/Texas)</option>
+            <option value="SI=F" data-name="Silver" data-lat="0" data-lon="0">Silber (SI)</option>
+            <option value="HG=F" data-name="Copper" data-lat="-22.4" data-lon="-68.9">Kupfer (Chile)</option>
+            <option value="NG=F" data-name="Natural Gas" data-lat="29.7" data-lon="-95.3">Erdgas (Henry Hub)</option>
+            <option value="ZS=F" data-name="Soybeans" data-lat="41.8" data-lon="-93.6">Soja (Iowa)</option>
+            <option value="ZC=F" data-name="Corn" data-lat="40.0" data-lon="-89.0">Mais (Illinois)</option>
+            <option value="ZW=F" data-name="Wheat" data-lat="38.5" data-lon="-98.0">Weizen (Kansas)</option>
+            <option value="KC=F" data-name="Coffee" data-lat="-21.7" data-lon="-46.5">Kaffee (Minas Gerais)</option>
+            <option value="CC=F" data-name="Cocoa" data-lat="6.8" data-lon="-1.6">Kakao (Elfenbeinküste)</option>
+            <option value="SB=F" data-name="Sugar" data-lat="-22.0" data-lon="-49.0">Zucker (São Paulo)</option>
         </select>
+        
         <div id="chart"></div>
+        
         <div class="grid">
-            <div class="box"><div class="label">COT Score</div><div class="val" id="cot">--</div></div>
-            <div class="box"><div class="label">Position</div><div class="val" id="pos">--</div></div>
-            <div class="box"><div class="label">Saisonalität</div><div class="val" id="sea">--</div></div>
-            <div class="box"><div class="label">Terminkurve</div><div class="val" id="str">--</div></div>
+            <div class="box"><div class="label">Live Wetter (Anbau/Förderung)</div><div class="val neutral" id="weather">Lädt...</div></div>
+            <div class="box"><div class="label">Contango/Backw.</div><div class="val neutral" id="term">Backend Req.</div></div>
+            <div class="box"><div class="label">Lagerbestand</div><div class="val neutral" id="inv">Backend Req.</div></div>
+            <div class="box"><div class="label">COT Realtime Score</div><div class="val neutral" id="cot">Backend Req.</div></div>
         </div>
+
+        <div class="news-box" id="news">Lädt News...</div>
     </div>
+
     <script>
-        // Deine Datenbank für die 11 Assets
-        const db = {
-            "Gold": { c: "41/100", p: "Net-Short", s: "Bärisch", k: "Contango" },
-            "Rohöl": { c: "54/100", p: "Net-Long", s: "Bullisch", k: "Backwardation" },
-            "Silber": { c: "38/100", p: "Net-Short", s: "Bärisch", k: "Contango" },
-            "Kupfer": { c: "68/100", p: "Net-Long", s: "Bullisch", k: "Backwardation" },
-            "Erdgas": { c: "76/100", p: "Net-Long", s: "Neutral", k: "Contango" },
-            "Soja": { c: "72/100", p: "Net-Long", s: "Neutral", k: "Contango" },
-            "Mais": { c: "51/100", p: "Neutral", s: "Bärisch", k: "Contango" },
-            "Weizen": { c: "49/100", p: "Neutral", s: "Bärisch", k: "Contango" },
-            "Kaffee": { c: "73/100", p: "Net-Long", s: "Bullisch", k: "Backwardation" },
-            "Kakao": { c: "36/100", p: "Net-Short", s: "Neutral", k: "Backwardation" },
-            "Zucker": { c: "58/100", p: "Net-Long", s: "Bullisch", k: "Contango" }
-        };
-        
-        const chart = LightweightCharts.createChart(document.getElementById('chart'), { width: 418, height: 220, layout: { background: { color: '#000' } }});
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), { 
+            width: 468, height: 250, 
+            layout: { background: { color: '#000' }, textColor: '#ccc' },
+            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } }
+        });
         const cs = chart.addCandlestickSeries();
-        cs.setData([{time:'2026-06-20', open:100, high:110, low:90, close:105}]);
-        
-        function upd() {
-            const v = db[document.getElementById('sel').value];
-            document.getElementById('cot').innerText = v.c;
-            document.getElementById('pos').innerText = v.p;
-            document.getElementById('sea').innerText = v.s;
-            document.getElementById('str').innerText = v.k;
+
+        async function loadAllData() {
+            const sel = document.getElementById('sel');
+            const ticker = sel.value;
+            const opt = sel.options[sel.selectedIndex];
+            
+            fetchChart(ticker);
+            fetchWeather(opt.dataset.lat, opt.dataset.lon);
+            fetchNews(opt.dataset.name);
         }
-        upd();
+
+        // 1. REALTIME CHART (Yahoo Finance)
+        async function fetchChart(ticker) {
+            const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=3mo&interval=1d`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const q = data.chart.result[0].indicators.quote[0];
+                const ts = data.chart.result[0].timestamp;
+                const formatted = ts.map((t, i) => ({ time: t, open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i] })).filter(d => d.open !== null);
+                cs.setData(formatted);
+            } catch (e) { console.error("Chart Error", e); }
+        }
+
+        // 2. REALTIME WETTER (Open-Meteo - Gezielt für Anbaugebiete)
+        async function fetchWeather(lat, lon) {
+            const el = document.getElementById('weather');
+            if(lat == 0 && lon == 0) { el.innerText = "N/A (Metall)"; return; }
+            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const w = data.current_weather;
+                el.innerText = `${w.temperature}°C (Wind: ${w.windspeed}km/h)`;
+            } catch (e) { el.innerText = "Fehler"; }
+        }
+
+        // 3. ECHTE NEWS (Yahoo Finance RSS via Proxy)
+        async function fetchNews(assetName) {
+            const el = document.getElementById('news');
+            el.innerHTML = "Lade News...";
+            // RSS Proxy für Google News Suche
+            const rssUrl = encodeURIComponent(`https://news.google.com/rss/search?q=${assetName}+commodity&hl=en-US&gl=US&ceid=US:en`);
+            const url = `https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                let html = '<div class="label" style="margin-bottom:5px;">Top 3 News</div>';
+                for(let i=0; i<3; i++) {
+                    if(data.items[i]) html += `<div class="news-item"><a href="${data.items[i].link}" target="_blank">${data.items[i].title}</a></div>`;
+                }
+                el.innerHTML = html;
+            } catch (e) { el.innerHTML = "News nicht verfügbar"; }
+        }
+
+        loadAllData();
     </script>
 </body>
 </html>
