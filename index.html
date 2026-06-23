@@ -7,33 +7,53 @@
     <style>
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #0b0f19; color: #f3f4f6; margin: 0; padding: 16px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; width: 100%; max-width: 380px; padding: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .header { border-bottom: 1px solid #1e293b; padding-bottom: 14px; margin-bottom: 20px; }
-        .header h1 { font-size: 20px; font-weight: 800; color: #fbbf24; margin: 0 0 4px 0; }
+        .card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; width: 100%; max-width: 380px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
+        
+        /* Extremwert-Ticker-Band */
+        .ticker-wrap { background: #020617; border: 1px solid #ef4444; border-radius: 8px; padding: 6px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; font-size: 11px; font-weight: bold; color: #f87171; display: none; }
+        .ticker { display: inline-block; animation: marquee 15s linear infinite; padding-left: 100%; }
+        @keyframes marquee { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
+
+        .header { border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px; text-align: center; }
+        .header h1 { font-size: 19px; font-weight: 800; color: #fbbf24; margin: 0 0 4px 0; }
         .header p { font-size: 11px; color: #94a3b8; margin: 0; }
-        .price-box { background-color: #020617; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 20px; }
-        .commodity-name { font-size: 13px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
-        .price-display { font-size: 30px; font-weight: 900; color: #34d399; }
+        
+        /* Dropdown Styling */
+        .select-container { margin-bottom: 16px; }
+        .styled-select { widtH: 100%; background-color: #1e293b; border: 1px solid #334155; color: #f1f5f9; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: bold; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; text-align-last: center; }
+        
+        .price-box { background-color: #020617; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 16px; }
+        .commodity-name { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+        .price-display { font-size: 28px; font-weight: 900; color: #34d399; }
+        
         .data-container { background-color: #020617; border-radius: 12px; padding: 4px 16px; }
         .data-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
         .data-row:last-of-type { border-bottom: none; }
         .label { color: #94a3b8; }
         .value { font-weight: 700; }
-        .navigation { display: flex; justify-content: space-between; margin-top: 20px; gap: 12px; }
-        .btn { background-color: #1e293b; border: 1px solid #334155; color: #f1f5f9; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 18px; width: 50%; border: none; }
-        .btn:active { background-color: #334155; }
     </style>
 </head>
 <body>
     <div class="card">
+        <div class="ticker-wrap" id="alert-wrap">
+            <div class="ticker" id="alert-ticker">Scanne Märkte nach Extremwerten...</div>
+        </div>
+
         <div class="header">
             <h1>Commodity Intelligence</h1>
             <p>100% Autark via CFTC, Yahoo & Weather</p>
         </div>
+
+        <div class="select-container">
+            <select class="styled-select" id="asset-select" onchange="selectTicker()">
+                </select>
+        </div>
+
         <div class="price-box">
             <div class="commodity-name" id="comm-name">Lade Asset...</div>
             <div class="price-display" id="comm-price">0.00 USD</div>
         </div>
+
         <div class="data-container">
             <div class="data-row"><span class="label">Commercial COT Score:</span><span class="value" id="cot-score">--/100</span></div>
             <div class="data-row"><span class="label">Positionierung:</span><span class="value" id="cot-pos">--</span></div>
@@ -41,70 +61,103 @@
             <div class="data-row"><span class="label">Terminkurve (Futures):</span><span class="value" id="term-structure">--</span></div>
             <div class="data-row"><span class="label">Einfluss / Makro:</span><span class="value" id="weather-impact">--</span></div>
         </div>
-        <div class="navigation">
-            <button class="btn" onclick="prevTicker()">&lt;</button>
-            <button class="btn" onclick="nextTicker()">&gt;</button>
-        </div>
     </div>
+
     <script>
+        // 2026er Schätzungen und Fallbacks für alle 13 Assets
         const fallbackPrices = { 
-            "CL=F": 74.20, 
-            "NG=F": 2.45, 
-            "GC=F": 4157.50, 
-            "SI=F": 65.15,   
-            "HG=F": 6.385,   
-            "ZW=F": 610.00, 
-            "ZC=F": 445.00, 
-            "KC=F": 220.00, 
-            "CC=F": 8450.00 
+            "CL=F": 74.20, "NG=F": 2.45, "GC=F": 4157.50, "SI=F": 65.15, "HG=F": 6.385, 
+            "ZW=F": 610.00, "ZC=F": 445.00, "ZS=F": 1120.00, "KC=F": 220.00, "CC=F": 8450.00,
+            "LE=F": 182.40, "LBS=F": 465.00, "HO=F": 2.25
         };
         
         const defaultMetaData = {
             "CL=F": { name: "Rohöl (Crude Oil)", cotScore: 54, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" },
             "NG=F": { name: "Erdgas (Nat Gas)", cotScore: 76, position: "Net-Long", seasonality: "Neutral", structure: "Contango" },
-            "GC=F": { name: "Gold", cotScore: 41, position: "Net-Short", seasonality: "Bärisch", structure: "Contango (Normal)" },
+            "GC=F": { name: "Gold", cotScore: 41, position: "Net-Short", seasonality: "Bärisch", structure: "Contango" },
             "SI=F": { name: "Silber (Silver)", cotScore: 38, position: "Net-Short", seasonality: "Bärisch", structure: "Contango" },
             "HG=F": { name: "Kupfer (Copper)", cotScore: 68, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" },
             "ZW=F": { name: "Weizen (Wheat)", cotScore: 49, position: "Neutral", seasonality: "Bärisch", structure: "Contango" },
             "ZC=F": { name: "Mais (Corn)", cotScore: 51, position: "Neutral", seasonality: "Bärisch", structure: "Contango" },
+            "ZS=F": { name: "Sojabohnen (Soybeans)", cotScore: 72, position: "Net-Long", seasonality: "Neutral", structure: "Contango" },
             "KC=F": { name: "Kaffee (Coffee)", cotScore: 73, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" },
-            "CC=F": { name: "Kakao (Cocoa)", cotScore: 36, position: "Net-Short", seasonality: "Neutral", structure: "Backwardation" }
+            "CC=F": { name: "Kakao (Cocoa)", cotScore: 36, position: "Net-Short", seasonality: "Neutral", structure: "Backwardation" },
+            "LE=F": { name: "Lebendrind (Live Cattle)", cotScore: 58, position: "Net-Long", seasonality: "Bullisch", structure: "Contango" },
+            "LBS=F": { name: "Holz (Lumber)", cotScore: 42, position: "Neutral", seasonality: "Neutral", structure: "Contango" },
+            "HO=F": { name: "Heizöl (Heating Oil)", cotScore: 61, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" }
         };
 
         // COT_DATA_PLACEHOLDER
         window.cotData = Object.assign({}, defaultMetaData, window.cotData || {});
 
         const tickers = Object.keys(window.cotData);
-        let currentIndex = 0;
+        let currentTicker = tickers[0];
+
+        // Initialisiert das Dropdown-Menü und den globalen Extremwert-Scanner
+        function initApp() {
+            const selectEl = document.getElementById('asset-select');
+            selectEl.innerHTML = "";
+            
+            tickers.forEach(ticker => {
+                const data = window.cotData[ticker];
+                const opt = document.createElement('option');
+                opt.value = ticker;
+                opt.innerText = data.name;
+                selectEl.appendChild(opt);
+            });
+
+            buildGlobalAlerts();
+            updateUI();
+        }
+
+        // Scannt permanent alle Assets und baut den ununterbrochenen Warn-Lauftext
+        function buildGlobalAlerts() {
+            let alerts = [];
+            tickers.forEach(ticker => {
+                const data = window.cotData[ticker];
+                if (data.cotScore >= 70) {
+                    alerts.push(`⚠️ ACHTUNG ${data.name.split(' (')[0].toUpperCase()}: Extrem Bullisch (Score ${data.cotScore}/100)`);
+                } else if (data.cotScore <= 40) {
+                    alerts.push(`⚠️ ACHTUNG ${data.name.split(' (')[0].toUpperCase()}: Extrem Bärisch (Score ${data.cotScore}/100)`);
+                }
+            });
+
+            const wrap = document.getElementById('alert-wrap');
+            const tickerEl = document.getElementById('alert-ticker');
+
+            if (alerts.length > 0) {
+                tickerEl.innerText = alerts.join("  |  ") + "  |  " + alerts.join("  |  ");
+                wrap.style.display = "block";
+            } else {
+                wrap.style.display = "none";
+            }
+        }
 
         function getDynamicWeather(ticker, currentPrice) {
-            if (ticker === "NG=F") return currentPrice > 2.40 ? "Bullisch (US-Hitzewelle)" : "Neutral (Normaltemperatur)";
+            if (ticker === "NG=F") return currentPrice > 2.40 ? "Bullisch (US-Hitzewelle)" : "Neutral";
             if (ticker === "CC=F") return currentPrice > 7000 ? "Bullisch (Dürre Westafrika)" : "Neutral";
             if (ticker === "KC=F") return currentPrice > 200 ? "Bullisch (Trockenrisiko Brasilien)" : "Neutral";
-            if (ticker === "ZW=F" || ticker === "ZC=F") return currentPrice < 550 ? "Bärisch (Guter US-Regen)" : "Neutral";
-            if (ticker === "GC=F") return "Kein Einfluss (Makro-Fokus)";
-            if (ticker === "SI=F") return currentPrice > 64.00 ? "Bullisch (Starke Solar-Nachfrage)" : "Neutral";
-            if (ticker === "HG=F") return currentPrice > 6.20 ? "Bullisch (KI-Netzausbau & China)" : "Bärisch (Industrie-Abkühlung)";
-            return "Neutral";
+            if (ticker === "ZW=F" || ticker === "ZC=F" || ticker === "ZS=F") return currentPrice < 550 ? "Bärisch (Guter US-Regen)" : "Neutral";
+            if (ticker === "LE=F") return currentPrice > 180 ? "Bullisch (Hohe Futterkosten)" : "Neutral";
+            if (ticker === "LBS=F") return currentPrice > 450 ? "Bullisch (Kanada Waldbrände)" : "Neutral";
+            if (ticker === "HO=F") return currentPrice > 2.30 ? "Bullisch (Kältewelle US-Ostküste)" : "Neutral";
+            return "Kein direkter Wettereinfluss";
         }
 
         async function fetchPrice(ticker) {
-            if (ticker !== tickers[currentIndex]) return;
+            if (ticker !== currentTicker) return;
 
             try {
                 const response = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1d&interval=1m&_nocache=${Date.now()}`);
                 const data = await response.json();
                 
-                if (ticker !== tickers[currentIndex]) return;
+                if (ticker !== currentTicker) return;
 
                 if (data?.chart?.result?.[0]) {
                     let price = data.chart.result[0].meta.regularMarketPrice;
                     let currency = data.chart.result[0].meta.currency || "USD";
                     
-                    if (ticker === "CC=F" && price < 1000) {
-                        price *= 25; 
-                        currency = "USD";
-                    }
+                    if (ticker === "CC=F" && price < 1000) { price *= 25; currency = "USD"; }
                     
                     const decimals = (ticker === "HG=F") ? 3 : 2;
                     document.getElementById('comm-price').innerText = price.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals}) + " " + currency;
@@ -113,7 +166,7 @@
                     throw new Error();
                 }
             } catch {
-                if (ticker !== tickers[currentIndex]) return;
+                if (ticker !== currentTicker) return;
                 const fPrice = fallbackPrices[ticker];
                 const decimals = (ticker === "HG=F") ? 3 : 2;
                 document.getElementById('comm-price').innerText = fPrice.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals}) + " USD";
@@ -132,9 +185,8 @@
         }
 
         function updateUI() {
-            const ticker = tickers[currentIndex];
-            const data = window.cotData[ticker];
-            const meta = defaultMetaData[ticker];
+            const data = window.cotData[currentTicker];
+            const meta = defaultMetaData[currentTicker];
 
             document.getElementById('comm-name').innerText = data.name || meta.name;
             document.getElementById('cot-score').innerText = (data.cotScore ?? meta.cotScore) + "/100";
@@ -144,19 +196,20 @@
             const currentStructure = data.structure || meta.structure;
             document.getElementById('term-structure').innerText = currentStructure;
 
-            const structEl = document.getElementById('term-structure');
-            structEl.style.color = currentStructure.includes("Backwardation") ? "#34d399" : "#94a3b8";
-
-            const posEl = document.getElementById('cot-pos');
-            posEl.style.color = (data.position ?? meta.position) === "Net-Long" ? "#34d399" : "#f87171";
+            document.getElementById('term-structure').style.color = currentStructure.includes("Backwardation") ? "#34d399" : "#94a3b8";
+            document.getElementById('cot-pos').style.color = (data.position ?? meta.position) === "Net-Long" ? "#34d399" : "#f87171";
 
             document.getElementById('comm-price').innerText = "Lädt...";
-            fetchPrice(ticker);
+            fetchPrice(currentTicker);
         }
 
-        function nextTicker() { currentIndex = (currentIndex + 1) % tickers.length; updateUI(); }
-        function prevTicker() { currentIndex = (currentIndex - 1 + tickers.length) % tickers.length; updateUI(); }
-        updateUI();
+        function selectTicker() {
+            currentTicker = document.getElementById('asset-select').value;
+            updateUI();
+        }
+
+        // Startet das System
+        initApp();
     </script>
 </body>
 </html>
