@@ -11,16 +11,16 @@
         
         /* Extremwert-Ticker-Band */
         .ticker-wrap { background: #020617; border: 1px solid #ef4444; border-radius: 8px; padding: 6px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; font-size: 11px; font-weight: bold; color: #f87171; display: none; }
-        .ticker { display: inline-block; animation: marquee 15s linear infinite; padding-left: 100%; }
+        /* HIER WURDE DIE ZEIT AUF 35s ERHÖHT FÜR EIN LANGSAMERES LAUFBAND */
+        .ticker { display: inline-block; animation: marquee 35s linear infinite; padding-left: 100%; }
         @keyframes marquee { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
         .header { border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px; text-align: center; }
         .header h1 { font-size: 19px; font-weight: 800; color: #fbbf24; margin: 0 0 4px 0; }
         .header p { font-size: 11px; color: #94a3b8; margin: 0; }
         
-        /* Dropdown Styling */
         .select-container { margin-bottom: 16px; }
-        .styled-select { widtH: 100%; background-color: #1e293b; border: 1px solid #334155; color: #f1f5f9; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: bold; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; text-align-last: center; }
+        .styled-select { width: 100%; background-color: #1e293b; border: 1px solid #334155; color: #f1f5f9; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: bold; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; text-align-last: center; }
         
         .price-box { background-color: #020617; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 16px; }
         .commodity-name { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
@@ -46,7 +46,7 @@
 
         <div class="select-container">
             <select class="styled-select" id="asset-select" onchange="selectTicker()">
-                </select>
+            </select>
         </div>
 
         <div class="price-box">
@@ -64,7 +64,6 @@
     </div>
 
     <script>
-        // 2026er Schätzungen und Fallbacks für alle 13 Assets
         const fallbackPrices = { 
             "CL=F": 74.20, "NG=F": 2.45, "GC=F": 4157.50, "SI=F": 65.15, "HG=F": 6.385, 
             "ZW=F": 610.00, "ZC=F": 445.00, "ZS=F": 1120.00, "KC=F": 220.00, "CC=F": 8450.00,
@@ -87,13 +86,11 @@
             "HO=F": { name: "Heizöl (Heating Oil)", cotScore: 61, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" }
         };
 
-        // COT_DATA_PLACEHOLDER
         window.cotData = Object.assign({}, defaultMetaData, window.cotData || {});
 
         const tickers = Object.keys(window.cotData);
         let currentTicker = tickers[0];
 
-        // Initialisiert das Dropdown-Menü und den globalen Extremwert-Scanner
         function initApp() {
             const selectEl = document.getElementById('asset-select');
             selectEl.innerHTML = "";
@@ -110,7 +107,6 @@
             updateUI();
         }
 
-        // Scannt permanent alle Assets und baut den ununterbrochenen Warn-Lauftext
         function buildGlobalAlerts() {
             let alerts = [];
             tickers.forEach(ticker => {
@@ -208,7 +204,6 @@
             updateUI();
         }
 
-        // Startet das System
         initApp();
     </script>
 </body>
