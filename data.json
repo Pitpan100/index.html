@@ -1,0 +1,80 @@
+{
+    "GC=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Bullisch (Sommer-Rallye)"
+    },
+    "CL=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Bullisch (Driving Season)"
+    },
+    "SI=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Neutral"
+    },
+    "HG=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Moderat Bärisch"
+    },
+    "NG=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Volatil / Neutral"
+    },
+    "ZS=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Bullisch (Wachstumsphase)"
+    },
+    "ZC=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Volatil (Wetter-Risiko)"
+    },
+    "ZW=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Bärisch (Erntephase)"
+    },
+    "KC=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Neutral / Fest"
+    },
+    "CC=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Hohe Volatilität"
+    },
+    "LE=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Neutral"
+    },
+    "LBS=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Moderat Bärisch"
+    },
+    "HO=F": {
+        "cot_score": "N/A",
+        "term_structure": "Backwardation (Knappheit)",
+        "inventories": "Keine aktuellen Daten",
+        "seasonality": "Saisonal Neutral"
+    }
+}
