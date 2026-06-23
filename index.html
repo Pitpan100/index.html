@@ -3,54 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Commodity Terminal</title>
+    <title>Commodity Terminal Pro</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background: #0b0f19; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
-        .card { max-width: 450px; margin: auto; background: #0f172a; border-radius: 16px; padding: 20px; border: 1px solid #1e293b; }
-        select { width: 100%; padding: 15px; background: #1e293b; color: white; border-radius: 10px; border: 1px solid #334155; font-weight: bold; margin-bottom: 20px; }
-        #chart { width: 100%; height: 250px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .box { background: #1e293b; padding: 10px; border-radius: 8px; text-align: center; }
-        .label { font-size: 9px; text-transform: uppercase; color: #64748b; }
+        body { background: #050505; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
+        .card { max-width: 450px; margin: auto; background: #111; border: 1px solid #333; border-radius: 12px; padding: 15px; }
+        select { width: 100%; padding: 12px; background: #222; color: #fff; border: 1px solid #444; border-radius: 8px; font-weight: bold; margin-bottom: 15px; }
+        #chart { width: 100%; height: 220px; background: #000; border: 1px solid #333; border-radius: 8px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .box { background: #222; padding: 10px; border-radius: 6px; text-align: center; }
+        .label { font-size: 8px; color: #888; text-transform: uppercase; }
         .val { font-size: 13px; font-weight: bold; color: #fff; margin-top: 4px; }
-        .news { margin-top: 20px; font-size: 13px; color: #cbd5e1; border-top: 1px solid #1e293b; padding-top: 15px; line-height: 1.6; }
+        .news { margin-top: 15px; font-size: 12px; color: #aaa; padding-top: 10px; border-top: 1px solid #333; }
     </style>
 </head>
 <body>
     <div class="card">
-        <select id="assets" onchange="update()"></select>
+        <select id="sel" onchange="upd()"></select>
         <div id="chart"></div>
         <div class="grid">
             <div class="box"><div class="label">COT Score</div><div class="val" id="cot">--</div></div>
             <div class="box"><div class="label">Position</div><div class="val" id="pos">--</div></div>
             <div class="box"><div class="label">Saisonalität</div><div class="val" id="sea">--</div></div>
-            <div class="box"><div class="label">Terminkurve</div><div class="val" id="str">--</div></div>
+            <div class="box"><div class="label">Kurve</div><div class="val" id="str">--</div></div>
         </div>
         <div class="news" id="news"></div>
     </div>
     <script>
         const db = {
-            "Gold": { cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", n: "1. Zentralbanken kaufen Rekordmengen. 2. US-Zinsentscheidungen drücken kurzfristig. 3. Physische Nachfrage in Asien stabil." },
-            "Rohöl": { cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", n: "1. OPEC+ plant weitere Förderkürzungen. 2. US-Lagerbestände zeigen Rückgang. 3. Geopolitische Spannungen stützen Preis." },
-            "Soja": { cot: "72/100", pos: "Net-Long", sea: "Neutral", str: "Contango", n: "1. Exportnachfrage aus China bleibt extrem stark. 2. US-Ernteberichte zeigen Stabilität. 3. Logistikprobleme in Brasilien belasten." }
+            "Gold": { c: "41/100", p: "Net-Short", s: "Bärisch", k: "Contango", n: "Zentralbank-Käufe auf Rekordniveau." },
+            "Rohöl": { c: "54/100", p: "Net-Long", s: "Bullisch", k: "Backwardation", n: "OPEC+ plant weitere Kürzungen." },
+            "Silber": { c: "38/100", p: "Net-Short", s: "Bärisch", k: "Contango", n: "Industrielle Nachfrage wächst." },
+            "Kupfer": { c: "68/100", p: "Net-Long", s: "Bullisch", k: "Backwardation", n: "Minen-Engpässe weltweit." },
+            "Soja": { c: "72/100", p: "Net-Long", s: "Neutral", k: "Contango", n: "Starke Exportnachfrage." }
         };
-        const sel = document.getElementById('assets');
+        const sel = document.getElementById('sel');
         Object.keys(db).forEach(k => sel.innerHTML += `<option value="${k}">${k}</option>`);
-        
-        const chart = LightweightCharts.createChart(document.getElementById('chart'), { width: 410, height: 250, layout: { background: { color: '#020617' }, textColor: '#94a3b8' }});
-        const series = chart.addCandlestickSeries();
-        series.setData([{time: '2026-06-20', open: 1900, high: 1950, low: 1890, close: 1920}]);
-
-        function update() {
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), { width: 418, height: 220, layout: { background: { color: '#000' } }});
+        const cs = chart.addCandlestickSeries();
+        cs.setData([{time:'2026-06-20', open:100, high:110, low:90, close:105}]);
+        function upd() {
             const v = db[sel.value];
-            document.getElementById('cot').innerText = v.cot;
-            document.getElementById('pos').innerText = v.pos;
-            document.getElementById('sea').innerText = v.sea;
-            document.getElementById('str').innerText = v.str;
+            document.getElementById('cot').innerText = v.c;
+            document.getElementById('pos').innerText = v.p;
+            document.getElementById('sea').innerText = v.s;
+            document.getElementById('str').innerText = v.k;
             document.getElementById('news').innerText = "📰 " + v.n;
         }
-        update();
+        upd();
     </script>
 </body>
 </html>
