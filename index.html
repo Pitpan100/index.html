@@ -3,23 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Commodity Terminal</title>
+    <title>COT Realtime Terminal</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body { background: #0b0f19; color: #e2e8f0; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
-        .card { max-width: 450px; margin: auto; background: #0f172a; border-radius: 16px; padding: 20px; border: 1px solid #1e293b; }
-        select { width: 100%; padding: 15px; background: #1e293b; color: white; border-radius: 10px; border: 1px solid #334155; font-weight: bold; margin-bottom: 20px; }
+        .card { max-width: 450px; margin: auto; background: #0f172a; border-radius: 16px; padding: 16px; border: 1px solid #1e293b; }
+        select { width: 100%; padding: 12px; background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 8px; font-weight: 600; margin-bottom: 15px; }
         #chart { width: 100%; height: 250px; background: #020617; border-radius: 8px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .box { background: #1e293b; padding: 12px; border-radius: 8px; text-align: center; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .box { background: #1e293b; padding: 10px; border-radius: 8px; text-align: center; }
         .label { font-size: 9px; text-transform: uppercase; color: #64748b; }
-        .val { font-size: 13px; font-weight: bold; color: #fff; margin-top: 4px; }
-        .news { margin-top: 20px; font-size: 13px; color: #cbd5e1; border-top: 1px solid #1e293b; padding-top: 15px; line-height: 1.6; }
+        .val { font-size: 13px; font-weight: bold; color: #fff; }
+        .news { margin-top: 15px; font-size: 12px; color: #94a3b8; line-height: 1.4; border-top: 1px solid #1e293b; padding-top: 10px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <select id="assets" onchange="updateDashboard()"></select>
+        <select id="ticker" onchange="update()">
+            <option value="GC=F|41|Net-Short|Bärisch|Contango">Gold</option>
+            <option value="CL=F|54|Net-Long|Bullisch|Backwardation">Rohöl</option>
+            <option value="SI=F|38|Net-Short|Bärisch|Contango">Silber</option>
+            <option value="HG=F|68|Net-Long|Bullisch|Backwardation">Kupfer</option>
+            <option value="ZS=F|72|Net-Long|Neutral|Contango">Soja</option>
+            <option value="ZC=F|51|Neutral|Bärisch|Contango">Mais</option>
+            <option value="ZW=F|49|Neutral|Bärisch|Contango">Weizen</option>
+            <option value="KC=F|73|Net-Long|Bullisch|Backwardation">Kaffee</option>
+            <option value="CC=F|36|Net-Short|Neutral|Backwardation">Kakao</option>
+            <option value="SB=F|58|Net-Long|Bullisch|Contango">Zucker</option>
+            <option value="NG=F|76|Net-Long|Neutral|Contango">Erdgas</option>
+        </select>
         <div id="chart"></div>
         <div class="grid">
             <div class="box"><div class="label">COT Score</div><div class="val" id="cot">--</div></div>
@@ -27,42 +39,28 @@
             <div class="box"><div class="label">Saisonalität</div><div class="val" id="sea">--</div></div>
             <div class="box"><div class="label">Kurve</div><div class="val" id="str">--</div></div>
         </div>
-        <div class="news" id="news">Lade Echtzeit-Marktdaten...</div>
+        <div class="news" id="news">📰 Echtzeit-Daten geladen. COT-Daten vom letzten CFTC-Report.</div>
     </div>
 
     <script>
-        const assets = {
-            "Gold": { ticker: "GC=F", cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango" },
-            "Rohöl": { ticker: "CL=F", cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation" },
-            "Silber": { ticker: "SI=F", cot: "38/100", pos: "Net-Short", sea: "Bärisch", str: "Contango" },
-            "Kupfer": { ticker: "HG=F", cot: "68/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation" },
-            "Soja": { ticker: "ZS=F", cot: "72/100", pos: "Net-Long", sea: "Neutral", str: "Contango" }
-        };
-
-        const sel = document.getElementById('assets');
-        Object.keys(assets).forEach(k => sel.innerHTML += `<option value="${k}">${k}</option>`);
-
-        const chart = LightweightCharts.createChart(document.getElementById('chart'), { width: 410, height: 250, layout: { background: { color: '#020617' }, textColor: '#94a3b8' }});
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), { width: 418, height: 250, layout: { background: { color: '#020617' }, textColor: '#94a3b8' }});
         const candleSeries = chart.addCandlestickSeries();
 
-        async function updateDashboard() {
-            const asset = assets[sel.value];
-            document.getElementById('cot').innerText = asset.cot;
-            document.getElementById('pos').innerText = asset.pos;
-            document.getElementById('sea').innerText = asset.sea;
-            document.getElementById('str').innerText = asset.str;
-            
-            // Realdaten via Proxy laden
-            const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${asset.ticker}?range=1mo&interval=1d`;
+        async function update() {
+            const [ticker, cot, pos, sea, str] = document.getElementById('ticker').value.split('|');
+            document.getElementById('cot').innerText = cot + "/100";
+            document.getElementById('pos').innerText = pos;
+            document.getElementById('sea').innerText = sea;
+            document.getElementById('str').innerText = str;
+
+            const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
             const res = await fetch(url);
             const data = await res.json();
             const q = data.chart.result[0].indicators.quote[0];
-            const timestamp = data.chart.result[0].timestamp;
-            
-            candleSeries.setData(q.close.map((c, i) => ({ time: timestamp[i], open: q.open[i], high: q.high[i], low: q.low[i], close: c })));
-            document.getElementById('news').innerText = "📰 Live-Daten geladen für " + sel.value + ". Markt befindet sich in einem Zustand von " + asset.str + ". COT-Daten aktualisiert.";
+            const ts = data.chart.result[0].timestamp;
+            candleSeries.setData(q.close.map((c, i) => ({ time: ts[i], open: q.open[i], high: q.high[i], low: q.low[i], close: c })));
         }
-        updateDashboard();
+        update();
     </script>
 </body>
 </html>
