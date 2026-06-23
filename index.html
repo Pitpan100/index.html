@@ -9,13 +9,13 @@
         body { background: #0b0f19; color: #e2e8f0; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
         .card { max-width: 450px; margin: auto; background: #0f172a; border-radius: 16px; padding: 16px; border: 1px solid #1e293b; }
         select { width: 100%; padding: 12px; background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 8px; font-weight: 600; margin-bottom: 15px; }
-        .price-box { font-size: 32px; font-weight: 800; color: #10b981; text-align: center; margin-bottom: 15px; }
-        canvas { width: 100%; height: 160px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; }
-        .news-section { margin-top: 15px; font-size: 13px; color: #94a3b8; border-top: 1px solid #1e293b; padding-top: 10px; line-height: 1.4; }
+        .price-box { font-size: 32px; font-weight: 800; color: #10b981; text-align: center; margin-bottom: 5px; }
+        canvas { width: 100%; height: 200px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; display: block; }
+        .news-box { margin-top: 15px; font-size: 13px; color: #cbd5e1; border-top: 1px solid #1e293b; padding-top: 10px; line-height: 1.4; height: 3.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
         .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .stat-box { background: #1e293b; padding: 10px; border-radius: 8px; text-align: center; }
-        .stat-label { font-size: 10px; text-transform: uppercase; color: #64748b; }
-        .stat-value { font-size: 14px; font-weight: bold; color: #f1f5f9; margin-top: 4px; }
+        .stat-box { background: #1e293b; padding: 8px; border-radius: 8px; text-align: center; }
+        .stat-label { font-size: 9px; text-transform: uppercase; color: #94a3b8; }
+        .stat-value { font-size: 13px; font-weight: bold; color: #f1f5f9; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -23,29 +23,20 @@
         <select id="asset-select" onchange="updateDashboard()"></select>
         <div class="price-box" id="price">-- USD</div>
         <canvas id="chartCanvas"></canvas>
+        <div class="news-box" id="news">📰 Lade Nachrichten...</div>
         <div class="data-grid">
             <div class="stat-box"><div class="stat-label">COT Score</div><div class="stat-value" id="cot">--</div></div>
             <div class="stat-box"><div class="stat-label">Position</div><div class="stat-value" id="pos">--</div></div>
             <div class="stat-box"><div class="stat-label">Saisonalität</div><div class="stat-value" id="season">--</div></div>
             <div class="stat-box"><div class="stat-label">Kurve</div><div class="stat-value" id="struct">--</div></div>
         </div>
-        <div class="news-section" id="news">📰 Lade Nachrichten...</div>
     </div>
 
     <script>
         const assets = {
-            "CL=F": { name: "Rohöl", cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "OPEC+ signalisiert Förderkürzungen." },
-            "GC=F": { name: "Gold", cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Zentralbank-Käufe stützen den Markt." },
-            "SI=F": { name: "Silber", cot: "38/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Industrielle Nachfrage wächst." },
-            "NG=F": { name: "Erdgas", cot: "76/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "AC-Bedarf treibt die Nachfrage." },
-            "HG=F": { name: "Kupfer", cot: "68/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "Minen-Engpässe verknappen das Angebot." },
-            "ZW=F": { name: "Weizen", cot: "49/100", pos: "Neutral", sea: "Bärisch", str: "Contango", news: "Wetterbedingungen in Russland belasten." },
-            "ZC=F": { name: "Mais", cot: "51/100", pos: "Neutral", sea: "Bärisch", str: "Contango", news: "US-Ernteberichte zeigen Stabilität." },
-            "ZS=F": { name: "Sojabohnen", cot: "72/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "Exportnachfrage bleibt hoch." },
-            "KC=F": { name: "Kaffee", cot: "73/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "Ernteausfälle in Brasilien." },
-            "CC=F": { name: "Kakao", cot: "36/100", pos: "Net-Short", sea: "Neutral", str: "Backwardation", news: "Wetter-Probleme in Westafrika." },
-            "SB=F": { name: "Zucker", cot: "58/100", pos: "Net-Long", sea: "Bullisch", str: "Contango", news: "Produktionsprognosen gesenkt." },
-            "CT=F": { name: "Baumwolle", cot: "45/100", pos: "Neutral", sea: "Bärisch", str: "Contango", news: "Textilnachfrage verlangsamt sich." }
+            "CL=F": { name: "Rohöl", cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "1. OPEC+ plant Förderkürzungen zur Preisstützung. 2. US-Lagerbestände sinken überraschend stark. 3. Geopolitische Spannungen treiben Risikoaufschläge nach oben." },
+            "GC=F": { name: "Gold", cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "1. Zentralbank-Goldkäufe setzen weltweit neue Rekorde. 2. US-Zinsentscheidung beeinflusst Goldpreis negativ. 3. Physische Nachfrage in Asien bleibt weiterhin sehr robust." },
+            // Ergänze hier beliebig weitere Assets nach diesem Schema
         };
 
         const sel = document.getElementById('asset-select');
@@ -69,26 +60,31 @@
             try {
                 const res = await fetch(url);
                 const data = await res.json();
-                const q = data.chart.result[0].indicators.quote[0].close;
+                const q = data.chart.result[0].indicators.quote[0];
                 document.getElementById('price').innerText = data.chart.result[0].meta.regularMarketPrice.toFixed(2) + " USD";
-                drawChart(q);
-            } catch(e) { document.getElementById('price').innerText = "Fehler"; }
+                drawChart(q.close, q.volume);
+            } catch(e) { document.getElementById('price').innerText = "Datenfehler"; }
         }
 
-        function drawChart(data) {
+        function drawChart(close, vol) {
             const canvas = document.getElementById('chartCanvas');
             const ctx = canvas.getContext('2d');
             canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = "#10b981"; ctx.lineWidth = 3; ctx.beginPath();
-            const clean = data.filter(n=>n);
-            const min = Math.min(...clean), max = Math.max(...clean);
-            clean.forEach((v, i) => {
-                const x = (i / (clean.length - 1)) * canvas.width;
-                const y = canvas.height - ((v - min) / (max - min) * canvas.height);
-                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+            
+            const min = Math.min(...close.filter(n=>n)), max = Math.max(...close.filter(n=>n));
+            const volMax = Math.max(...vol.filter(n=>n));
+
+            close.forEach((v, i) => {
+                const x = (i / (close.length - 1)) * canvas.width;
+                // Preis-Balken
+                ctx.fillStyle = "#10b981";
+                ctx.fillRect(x - 2, canvas.height - ((v - min) / (max - min) * canvas.height * 0.7) - 40, 4, 4);
+                // Volumen-Balken (unten)
+                ctx.fillStyle = "#1e293b";
+                const vHeight = (vol[i] / volMax) * 30;
+                ctx.fillRect(x - 2, canvas.height - vHeight, 4, vHeight);
             });
-            ctx.stroke();
         }
         updateDashboard();
     </script>
