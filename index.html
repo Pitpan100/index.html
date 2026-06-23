@@ -3,48 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Commodity Terminal</title>
+    <title>Commodity Intelligence</title>
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background: #0b0f19; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
+        body { background: #0b0f19; color: #e2e8f0; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
         .card { max-width: 450px; margin: auto; background: #0f172a; border-radius: 16px; padding: 20px; border: 1px solid #1e293b; }
-        select { width: 100%; padding: 15px; background: #1e293b; color: white; border-radius: 10px; border: 1px solid #334155; font-weight: bold; margin-bottom: 20px; }
-        canvas { width: 100%; height: 180px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; }
-        .news { margin-top: 15px; font-size: 13px; color: #cbd5e1; border-top: 1px solid #1e293b; padding-top: 10px; line-height: 1.5; }
+        select { width: 100%; padding: 15px; background: #1e293b; color: white; border-radius: 10px; border: 1px solid #334155; font-weight: bold; margin-bottom: 15px; }
+        #chart { width: 100%; height: 250px; background: #020617; border-radius: 8px; margin-bottom: 15px; }
+        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .box { background: #1e293b; padding: 10px; border-radius: 8px; text-align: center; }
+        .label { font-size: 9px; text-transform: uppercase; color: #64748b; }
+        .val { font-size: 13px; font-weight: bold; color: #fff; margin-top: 4px; }
+        .news { margin-top: 15px; font-size: 12px; color: #94a3b8; line-height: 1.4; border-top: 1px solid #1e293b; padding-top: 10px; }
     </style>
 </head>
 <body>
     <div class="card">
         <select id="assets" onchange="update()"></select>
-        <canvas id="chart"></canvas>
-        <div class="news" id="news">Wähle ein Asset...</div>
+        <div id="chart"></div>
+        <div class="data-grid">
+            <div class="box"><div class="label">COT Score</div><div class="val" id="cot">--</div></div>
+            <div class="box"><div class="label">Position</div><div class="val" id="pos">--</div></div>
+            <div class="box"><div class="label">Saisonalität</div><div class="val" id="sea">--</div></div>
+            <div class="box"><div class="label">Terminkurve</div><div class="val" id="str">--</div></div>
+        </div>
+        <div class="news" id="news">📰 Lade Marktdaten...</div>
     </div>
+
     <script>
         const db = {
-            "Gold": { n: "Gold (GC=F)", news: "Zentralbank-Käufe auf Rekordniveau." },
-            "Rohöl": { n: "Rohöl (CL=F)", news: "OPEC+ signalisiert Förderkürzungen." },
-            "Silber": { n: "Silber (SI=F)", news: "Industrielle Nachfrage wächst massiv." },
-            "Kupfer": { n: "Kupfer (HG=F)", news: "Minen-Engpässe verknappen Angebot." },
-            "Erdgas": { n: "Erdgas (NG=F)", news: "Hitzewellen treiben Energiebedarf." },
-            "Soja": { n: "Sojabohnen (ZS=F)", news: "Exportnachfrage bleibt trotz hoher Preise stark." },
-            "Mais": { n: "Mais (ZC=F)", news: "US-Ernteberichte zeigen Stabilität." },
-            "Weizen": { n: "Weizen (ZW=F)", news: "Wetterbedingungen in Russland belasten Ernte." },
-            "Kaffee": { n: "Kaffee (KC=F)", news: "Ernteausfälle in Brasilien treiben Preise." },
-            "Kakao": { n: "Kakao (CC=F)", news: "Historische Knappheit durch Wetterkapriolen." },
-            "Zucker": { n: "Zucker (SB=F)", news: "Produktionsprognosen wurden gesenkt." }
+            "Gold": { cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Zentralbank-Käufe stützen. Zinsentscheidungen drücken auf den Preis." },
+            "Soja": { cot: "72/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "Starke Exportnachfrage, aber Ernteerwartungen stabilisieren den Markt." }
+            // Hier fügst du einfach deine weiteren Assets hinzu
         };
+
         const sel = document.getElementById('assets');
         Object.keys(db).forEach(k => sel.innerHTML += `<option value="${k}">${k}</option>`);
+
+        // Chart initialisieren
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+            width: 418, height: 250, layout: { background: { color: '#020617' }, textColor: '#94a3b8' }
+        });
+        const candleSeries = chart.addCandlestickSeries();
+
         function update() {
-            document.getElementById('news').innerText = "📰 " + db[sel.value].news;
-            draw();
-        }
-        function draw() {
-            const canvas = document.getElementById('chart'), ctx = canvas.getContext('2d');
-            canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.strokeStyle = '#10b981'; ctx.lineWidth = 3; ctx.beginPath();
-            for(let i=0; i<20; i++) ctx.lineTo(i * (canvas.width/19), Math.random() * (canvas.height-40) + 20);
-            ctx.stroke();
+            const v = db[sel.value];
+            document.getElementById('cot').innerText = v.cot;
+            document.getElementById('pos').innerText = v.pos;
+            document.getElementById('sea').innerText = v.sea;
+            document.getElementById('str').innerText = v.str;
+            document.getElementById('news').innerText = "📰 " + v.news;
+            
+            // Hier würde die echte Datenanbindung an deine API kommen
+            candleSeries.setData([{ time: '2023-06-01', open: 1900, high: 1950, low: 1890, close: 1920 }]);
         }
         update();
     </script>
