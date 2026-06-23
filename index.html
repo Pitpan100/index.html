@@ -47,13 +47,12 @@
         </div>
     </div>
     <script>
-        // Realistische Fallback-Preise inklusive Silber und Kupfer
         const fallbackPrices = { 
             "CL=F": 74.20, 
             "NG=F": 2.45, 
             "GC=F": 4157.50, 
-            "SI=F": 66.50,   // Silber-Fallback pro Feinunze
-            "HG=F": 6.38,    // Kupfer-Fallback pro Pfund (COMEX)
+            "SI=F": 65.15,   
+            "HG=F": 6.385,   
             "ZW=F": 610.00, 
             "ZC=F": 445.00, 
             "KC=F": 220.00, 
@@ -72,13 +71,12 @@
             "CC=F": { name: "Kakao (Cocoa)", cotScore: 36, position: "Net-Short", seasonality: "Neutral", structure: "Backwardation" }
         };
 
-        // COT_DATA_PLACEHOLDER (Wird durch dein Python-Skript wöchentlich befüllt)
+        // COT_DATA_PLACEHOLDER
         window.cotData = Object.assign({}, defaultMetaData, window.cotData || {});
 
         const tickers = Object.keys(window.cotData);
         let currentIndex = 0;
 
-        // Dynamische Makro- und Wetter-Logik erweitert für Metalle
         function getDynamicWeather(ticker, currentPrice) {
             if (ticker === "NG=F") return currentPrice > 2.40 ? "Bullisch (US-Hitzewelle)" : "Neutral (Normaltemperatur)";
             if (ticker === "CC=F") return currentPrice > 7000 ? "Bullisch (Dürre Westafrika)" : "Neutral";
@@ -86,7 +84,7 @@
             if (ticker === "ZW=F" || ticker === "ZC=F") return currentPrice < 550 ? "Bärisch (Guter US-Regen)" : "Neutral";
             if (ticker === "GC=F") return "Kein Einfluss (Makro-Fokus)";
             if (ticker === "SI=F") return currentPrice > 64.00 ? "Bullisch (Starke Solar-Nachfrage)" : "Neutral";
-            if (ticker === "HG=F") return currentPrice > 6.00 ? "Bullisch (KI-Netzausbau & China)" : "Bärisch (Industrie-Abkühlung)";
+            if (ticker === "HG=F") return currentPrice > 6.20 ? "Bullisch (KI-Netzausbau & China)" : "Bärisch (Industrie-Abkühlung)";
             return "Neutral";
         }
 
@@ -108,7 +106,6 @@
                         currency = "USD";
                     }
                     
-                    // Saubere Formatierung: Kupfer kriegt 3 Nachkommastellen (Comex-Standard), andere Assets 2
                     const decimals = (ticker === "HG=F") ? 3 : 2;
                     document.getElementById('comm-price').innerText = price.toLocaleString('en-US', {minimumFractionDigits: decimals, maximumFractionDigits: decimals}) + " " + currency;
                     updateLiveWeather(ticker, price);
