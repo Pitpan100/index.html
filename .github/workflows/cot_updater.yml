@@ -1,39 +1,36 @@
 name: Automated Commodity Intelligence Updater
 
 on:
+  workflow_dispatch: # Ermöglicht den manuellen Start über den Button
   schedule:
-    # Jeden Samstagmorgen um 06:00 Uhr UTC
-    - cron: '0 6 * * 6'
-  workflow_dispatch: # Ermöglicht manuelles Starten
+    - cron: '0 6 * * 6' # Jeden Samstag um 06:00 UTC
 
 jobs:
   update-data:
     runs-on: ubuntu-latest
-    # CRITICAL FIX: Erteilt der Action die Erlaubnis, Code ins Repo zu pushen
     permissions:
-      contents: write
-      
+      contents: write # WICHTIG: Gibt der Action das Recht, Dateien zu ändern
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.10'
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
 
-    - name: Install Dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pandas numpy requests
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install requests pandas
 
-    - name: Run COT Updater Script
-      run: python update_cot.py
+      - name: Run Updater Script
+        run: python update_cot.py
 
-    - name: Commit and Push Changes
-      run: |
-        git config --global user.name "GitHub Action Autopilot"
-        git config --global user.email "actions@github.com"
-        git add index.html
-        git commit -m "Autopilot: Echtzeit COT-Daten & Terminstrukturen aktualisiert" || echo "Keine Änderungen vorhanden"
-        git push
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "actions@github.com"
+          git add index.html
+          git diff-index --quiet HEAD || git commit -m "Automated COT Data Update"
+          git push
