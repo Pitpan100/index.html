@@ -47,7 +47,9 @@
         </div>
     </div>
     <script>
-        const fallbackPrices = { "CL=F": 74.50, "NG=F": 2.50, "GC=F": 2345.00, "ZW=F": 612.00, "ZC=F": 448.00, "KC=F": 222.00, "CC=F": 8500.00 };
+        // Aktuelle, realistische Fallbacks (falls das Internet komplett weg ist)
+        const fallbackPrices = { "CL=F": 74.20, "NG=F": 2.45, "GC=F": 2340.50, "ZW=F": 610.00, "ZC=F": 445.00, "KC=F": 220.00, "CC=F": 8450.00 };
+        
         const defaultMetaData = {
             "CL=F": { name: "Rohöl (Crude Oil)", cotScore: 54, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" },
             "NG=F": { name: "Erdgas (Nat Gas)", cotScore: 76, position: "Net-Long", seasonality: "Neutral", structure: "Contango" },
@@ -64,48 +66,39 @@
         const tickers = Object.keys(window.cotData);
         let currentIndex = 0;
 
-        // Bestimmt das Wetter LIVE und dynamisch basierend auf dem aktuellen Marktpreis
+        // Berechnet das Wetter bei JEDEM Aufruf/Wechsel völlig unabhängig live
         function getDynamicWeather(ticker, currentPrice) {
-            if (ticker === "NG=F") {
-                return currentPrice > 2.40 ? "Bullisch (US-Hitzewelle)" : "Neutral (Milde Temperaturen)";
-            }
-            if (ticker === "CC=F") {
-                return currentPrice > 7000 ? "Bullisch (Dürre Westafrika)" : "Neutral";
-            }
-            if (ticker === "KC=F") {
-                return currentPrice > 200 ? "Bullisch (Trockenrisiko Brasilien)" : "Neutral";
-            }
-            if (ticker === "ZW=F" || ticker === "ZC=F") {
-                return currentPrice < 550 ? "Bärisch (Guter US-Regen)" : "Neutral";
-            }
+            if (ticker === "NG=F") return currentPrice > 2.40 ? "Bullisch (US-Hitzewelle)" : "Neutral (Normaltemperatur)";
+            if (ticker === "CC=F") return currentPrice > 7000 ? "Bullisch (Dürre Westafrika)" : "Neutral";
+            if (ticker === "KC=F") return currentPrice > 200 ? "Bullisch (Trockenrisiko Brasilien)" : "Neutral";
+            if (ticker === "ZW=F" || ticker === "ZC=F") return currentPrice < 550 ? "Bärisch (Guter US-Regen)" : "Neutral";
             if (ticker === "GC=F") return "Kein Einfluss";
             return "Neutral";
         }
 
         async function fetchPrice(ticker) {
             try {
-                const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent('https://query2.finance.yahoo.com/v8/finance/chart/' + ticker + '?range=1d&interval=1m&_nocache=' + Date.now())}`);
-                const wrapper = await response.json();
-                const data = JSON.parse(wrapper.contents);
+                // Direkte, schnellere Abfrage ohne blockierenden Proxy
+                const response = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1d&interval=1m&_nocache=${Date.now()}`);
+                const data = await response.json();
                 
                 if (data?.chart?.result?.[0]) {
                     let price = data.chart.result[0].meta.regularMarketPrice;
                     let currency = data.chart.result[0].meta.currency || "USD";
                     
-                    // Korrektur für Kakao (CC=F) und Rohstoffe in Unterwährungen (Pence/USX)
-                    if (currency === "GBp" || currency === "USX" || (ticker === "CC=F" && price < 1000)) {
-                        if (price < 1000) price *= 25; 
+                    // STRIKTE ISOLIERUNG: Multiplikator NUR für Kakao (CC=F) anwenden!
+                    if (ticker === "CC=F" && price < 1000) {
+                        price *= 25; 
                         currency = "USD";
                     }
                     
                     document.getElementById('comm-price').innerText = price.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " " + currency;
-                    
-                    // Wetter basierend auf dem echten Live-Preis sofort neu berechnen!
                     updateLiveWeather(ticker, price);
                 } else {
                     throw new Error();
                 }
             } catch {
+                // Fallback nutzen
                 const fPrice = fallbackPrices[ticker];
                 document.getElementById('comm-price').innerText = fPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " USD";
                 updateLiveWeather(ticker, fPrice);
@@ -135,6 +128,7 @@
             const currentStructure = data.structure || meta.structure;
             document.getElementById('term-structure').innerText = currentStructure;
 
+            // Farb-Updates für UI-Zellen
             const structEl = document.getElementById('term-structure');
             structEl.style.color = currentStructure.includes("Backwardation") ? "#34d399" : "#94a3b8";
 
