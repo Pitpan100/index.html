@@ -3,114 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ultimate Realtime Terminal</title>
+    <title>Commodity Intelligence Terminal</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background: #000; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
-        .card { max-width: 500px; margin: auto; background: #0a0a0a; border: 1px solid #222; border-radius: 12px; padding: 15px; }
-        select { width: 100%; padding: 12px; background: #111; color: #fff; border: 1px solid #444; border-radius: 8px; font-weight: bold; margin-bottom: 15px; }
-        #chart { width: 100%; height: 250px; background: #000; border-radius: 8px; border: 1px solid #222; margin-bottom: 15px;}
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
-        .box { background: #111; padding: 10px; border-radius: 6px; border: 1px solid #222; }
-        .label { font-size: 9px; color: #888; text-transform: uppercase; }
-        .val { font-size: 13px; font-weight: bold; margin-top: 4px; color: #0f0; }
-        .val.neutral { color: #fff; }
-        .news-box { background: #111; padding: 10px; border-radius: 6px; border: 1px solid #222; font-size: 11px; }
-        .news-item { margin-bottom: 8px; border-bottom: 1px solid #333; padding-bottom: 5px; }
-        .news-item a { color: #4da6ff; text-decoration: none; }
+        body { background: #050505; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 12px; }
+        .container { max-width: 480px; margin: auto; background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 14px; padding: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+        select { width: 100%; padding: 14px; background: #161616; color: #fff; border: 1px solid #2a2a2a; border-radius: 10px; font-weight: bold; font-size: 15px; margin-bottom: 16px; -webkit-appearance: none; }
+        #chart { width: 100%; height: 240px; background: #000; border-radius: 10px; border: 1px solid #1a1a1a; margin-bottom: 16px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .box { background: #121212; padding: 12px; border-radius: 8px; border: 1px solid #1c1c1c; }
+        .label { font-size: 9px; color: #666; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
+        .val { font-size: 13px; font-weight: bold; color: #00ff66; margin-top: 4px; }
+        .val.neutral { color: #ffffff; }
+        .news-panel { background: #121212; padding: 12px; border-radius: 8px; border: 1px solid #1c1c1c; }
+        .news-title { font-size: 10px; color: #666; text-transform: uppercase; font-weight: bold; margin-bottom: 8px; }
+        .news-item { font-size: 12px; margin-bottom: 8px; line-height: 1.4; border-bottom: 1px solid #1a1a1a; padding-bottom: 6px; }
+        .news-item:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
+        .news-item a { color: #38bdf8; text-decoration: none; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <select id="sel" onchange="loadAllData()">
-            <option value="GC=F" data-name="Gold" data-lat="0" data-lon="0">Gold (GC)</option>
-            <option value="CL=F" data-name="Crude Oil" data-lat="31.9" data-lon="-102.3">Rohöl (WTI/Texas)</option>
-            <option value="SI=F" data-name="Silver" data-lat="0" data-lon="0">Silber (SI)</option>
-            <option value="HG=F" data-name="Copper" data-lat="-22.4" data-lon="-68.9">Kupfer (Chile)</option>
-            <option value="NG=F" data-name="Natural Gas" data-lat="29.7" data-lon="-95.3">Erdgas (Henry Hub)</option>
-            <option value="ZS=F" data-name="Soybeans" data-lat="41.8" data-lon="-93.6">Soja (Iowa)</option>
-            <option value="ZC=F" data-name="Corn" data-lat="40.0" data-lon="-89.0">Mais (Illinois)</option>
-            <option value="ZW=F" data-name="Wheat" data-lat="38.5" data-lon="-98.0">Weizen (Kansas)</option>
-            <option value="KC=F" data-name="Coffee" data-lat="-21.7" data-lon="-46.5">Kaffee (Minas Gerais)</option>
-            <option value="CC=F" data-name="Cocoa" data-lat="6.8" data-lon="-1.6">Kakao (Elfenbeinküste)</option>
-            <option value="SB=F" data-name="Sugar" data-lat="-22.0" data-lon="-49.0">Zucker (São Paulo)</option>
-        </select>
-        
-        <div id="chart"></div>
-        
-        <div class="grid">
-            <div class="box"><div class="label">Live Wetter (Anbau/Förderung)</div><div class="val neutral" id="weather">Lädt...</div></div>
-            <div class="box"><div class="label">Contango/Backw.</div><div class="val neutral" id="term">Backend Req.</div></div>
-            <div class="box"><div class="label">Lagerbestand</div><div class="val neutral" id="inv">Backend Req.</div></div>
-            <div class="box"><div class="label">COT Realtime Score</div><div class="val neutral" id="cot">Backend Req.</div></div>
-        </div>
 
-        <div class="news-box" id="news">Lädt News...</div>
+<div class="container">
+    <select id="sel" onchange="loadAssetData()">
+        <option value="GC=F" data-name="Gold" data-lat="0" data-lon="0">Gold (GC)</option>
+        <option value="CL=F" data-name="Crude Oil" data-lat="31.9" data-lon="-102.3">Rohöl WTI (CL)</option>
+        <option value="SI=F" data-name="Silver" data-lat="0" data-lon="0">Silber (SI)</option>
+        <option value="HG=F" data-name="Copper" data-lat="-22.4" data-lon="-68.9">Kupfer (HG)</option>
+        <option value="NG=F" data-name="Natural Gas" data-lat="29.7" data-lon="-95.3">Erdgas (NG)</option>
+        <option value="ZS=F" data-name="Soybeans" data-lat="41.8" data-lon="-93.6">Sojabohnen (ZS)</option>
+        <option value="ZC=F" data-name="Corn" data-lat="40.0" data-lon="-89.0">Mais (ZC)</option>
+        <option value="ZW=F" data-name="Wheat" data-lat="38.5" data-lon="-98.0">Weizen (ZW)</option>
+        <option value="KC=F" data-name="Coffee" data-lat="-21.7" data-lon="-46.5">Kaffee (KC)</option>
+        <option value="CC=F" data-name="Cocoa" data-lat="6.8" data-lon="-1.6">Kakao (CC)</option>
+        <option value="SB=F" data-name="Sugar" data-lat="-22.0" data-lon="-49.0">Zucker (SB)</option>
+    </select>
+
+    <div id="chart"></div>
+
+    <div class="grid">
+        <div class="box"><div class="label">COT Realtime Score</div><div class="val" id="cot">Lade...</div></div>
+        <div class="box"><div class="label">Terminkurve</div><div class="val neutral" id="term">Lade...</div></div>
+        <div class="box"><div class="label">Lagerbestand / Position</div><div class="val neutral" id="inv">Lade...</div></div>
+        <div class="box"><div class="label">Live Wetter (Hub)</div><div class="val neutral" id="weather">Lade...</div></div>
     </div>
 
-    <script>
-        const chart = LightweightCharts.createChart(document.getElementById('chart'), { 
-            width: 468, height: 250, 
-            layout: { background: { color: '#000' }, textColor: '#ccc' },
-            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } }
-        });
-        const cs = chart.addCandlestickSeries();
+    <div class="news-panel">
+        <div class="news-title">Top 3 Realtime News</div>
+        <div id="news">Lade...</div>
+    </div>
+</div>
 
-        async function loadAllData() {
-            const sel = document.getElementById('sel');
-            const ticker = sel.value;
-            const opt = sel.options[sel.selectedIndex];
+<script>
+    // Initialisiere den nativen Chart ohne jede TV-Abhängigkeit
+    const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+        width: 446,
+        height: 240,
+        layout: { background: { color: '#000000' }, textColor: '#aaaaaa' },
+        grid: { vertLines: { color: '#111111' }, horzLines: { color: '#111111' } },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        timeScale: { borderColor: '#222222' }}
+    );
+    const candlestickSeries = chart.addCandlestickSeries({
+        upColor: '#00ff66', downColor: '#ff3355', borderVisible: false, wickUpColor: '#00ff66', wickDownColor: '#ff3355'
+    });
+
+    // Hauptfunktion zum Laden aller echten Datenströme
+    async function loadAssetData() {
+        const select = document.getElementById('sel');
+        const ticker = select.value;
+        const selectedOption = select.options[select.selectedIndex];
+        const assetName = selectedOption.dataset.name;
+        
+        fetchRealtimePrice(ticker);
+        fetchBackendData(ticker);
+        fetchLiveWeather(selectedOption.dataset.lat, selectedOption.dataset.lon);
+        fetchLiveNews(assetName);
+    }
+
+    // 1. ECHTE HISTORISCHE & LIVE-KURSE (Yahoo Finance Direct Proxy)
+    async function fetchRealtimePrice(ticker) {
+        const url = `https://corsproxy.io/?https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=3mo&interval=1d`;
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            const quotes = data.chart.result[0].indicators.quote[0];
+            const timestamps = data.chart.result[0].timestamp;
             
-            fetchChart(ticker);
-            fetchWeather(opt.dataset.lat, opt.dataset.lon);
-            fetchNews(opt.dataset.name);
-        }
+            const candleData = timestamps.map((t, i) => ({
+                time: t, open: quotes.open[i], high: quotes.high[i], low: quotes.low[i], close: quotes.close[i]
+            })).filter(c => c.open !== null && c.close !== null);
+            
+            candlestickSeries.setData(candleData);
+        } catch (e) { console.error("Kurs-Fehler:", e); }
+    }
 
-        // 1. REALTIME CHART (Yahoo Finance)
-        async function fetchChart(ticker) {
-            const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=3mo&interval=1d`;
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                const q = data.chart.result[0].indicators.quote[0];
-                const ts = data.chart.result[0].timestamp;
-                const formatted = ts.map((t, i) => ({ time: t, open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i] })).filter(d => d.open !== null);
-                cs.setData(formatted);
-            } catch (e) { console.error("Chart Error", e); }
-        }
+    // 2. VERKNÜPFUNG MIT DEINEM PYTHON-BACKEND (data.json von GitHub Actions)
+    async function fetchBackendData(ticker) {
+        // Cache-Busting über Timestamp, damit das iPad IMMER die frischeste JSON holt
+        const url = `./data.json?t=${new Date().getTime()}`;
+        try {
+            const res = await fetch(url);
+            const backend = await res.json();
+            const assetData = backend[ticker];
 
-        // 2. REALTIME WETTER (Open-Meteo - Gezielt für Anbaugebiete)
-        async function fetchWeather(lat, lon) {
-            const el = document.getElementById('weather');
-            if(lat == 0 && lon == 0) { el.innerText = "N/A (Metall)"; return; }
-            const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                const w = data.current_weather;
-                el.innerText = `${w.temperature}°C (Wind: ${w.windspeed}km/h)`;
-            } catch (e) { el.innerText = "Fehler"; }
+            if (assetData) {
+                document.getElementById('cot').innerText = assetData.cot_score || assetData.cot || "N/A";
+                document.getElementById('term').innerText = assetData.term_structure || assetData.kurve || "N/A";
+                document.getElementById('inv').innerText = assetData.inventories || assetData.position || "N/A";
+            } else {
+                document.getElementById('cot').innerText = "Keine Daten";
+                document.getElementById('term').innerText = "Keine Daten";
+                document.getElementById('inv').innerText = "Keine Daten";
+            }
+        } catch (e) {
+            document.getElementById('cot').innerText = "Error";
+            document.getElementById('term').innerText = "Error";
+            document.getElementById('inv').innerText = "Error";
         }
+    }
 
-        // 3. ECHTE NEWS (Yahoo Finance RSS via Proxy)
-        async function fetchNews(assetName) {
-            const el = document.getElementById('news');
-            el.innerHTML = "Lade News...";
-            // RSS Proxy für Google News Suche
-            const rssUrl = encodeURIComponent(`https://news.google.com/rss/search?q=${assetName}+commodity&hl=en-US&gl=US&ceid=US:en`);
-            const url = `https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`;
-            try {
-                const res = await fetch(url);
-                const data = await res.json();
-                let html = '<div class="label" style="margin-bottom:5px;">Top 3 News</div>';
-                for(let i=0; i<3; i++) {
-                    if(data.items[i]) html += `<div class="news-item"><a href="${data.items[i].link}" target="_blank">${data.items[i].title}</a></div>`;
+    // 3. ECHTES LIVE-WETTER FÜR DIE HAUPTANBAUGEBIETE/FÖRDER-HUBS (Open-Meteo)
+    async function fetchLiveWeather(lat, lon) {
+        const el = document.getElementById('weather');
+        if (lat == 0 && lon == 0) { el.innerText = "N/A (Metall)"; return; }
+        try {
+            const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
+            const data = await res.json();
+            el.innerText = `${data.current_weather.temperature}°C | Wind: ${data.current_weather.windspeed} km/h`;
+        } catch (e) { el.innerText = "Wetter-Fehler"; }
+    }
+
+    // 4. TOP 3 REALTIME NEWS (Google News RSS Feed via XML-to-JSON Converter)
+    async function fetchLiveNews(assetName) {
+        const el = document.getElementById('news');
+        const feedUrl = encodeURIComponent(`https://news.google.com/rss/search?q=${assetName}+commodity+market&hl=de&gl=DE&ceid=DE:de`);
+        try {
+            const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`);
+            const data = await res.json();
+            let html = '';
+            for (let i = 0; i < 3; i++) {
+                if (data.items && data.items[i]) {
+                    html += `<div class="news-item"><a href="${data.items[i].link}" target="_blank">➔ ${data.items[i].title}</a></div>`;
                 }
-                el.innerHTML = html;
-            } catch (e) { el.innerHTML = "News nicht verfügbar"; }
-        }
+            }
+            el.innerHTML = html || "Keine aktuellen News gefunden.";
+        } catch (e) { el.innerHTML = "News-Stream temporär offline."; }
+    }
 
-        loadAllData();
-    </script>
+    // Initialer Start beim Laden der App
+    loadAssetData();
+</script>
+
 </body>
 </html>
