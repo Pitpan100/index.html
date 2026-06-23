@@ -23,11 +23,23 @@ def get_live_term_structure(ticker):
         price_front = data['chart']['result'][0]['meta']['regularMarketPrice']
         
         clean = ticker.replace('=F', '')
-        if clean in ["CC", "KC"] and price_front > 150:
+        
+        # Dynamische Schwellenwerte: Liegt der Frontmonat signifikant über der historischen Basis,
+        # deutet das auf akute physische Verknappung (Backwardation) am Markt hin.
+        thresholds = {
+            "CC": 6500,   # Kakao historisch hoch -> Backwardation
+            "KC": 190,    # Kaffee über Basis -> Backwardation
+            "CL": 78,     # Rohöl Schwellenwert
+            "NG": 2.60,   # Erdgas bei starker Sommerhitze
+            "GC": 2350    # Gold bei starker physischer Nachfrage
+        }
+        
+        if clean in thresholds and price_front > thresholds[clean]:
             return "Backwardation"
-        return "Contango"
-    except:
+        
         return "Contango (Normal)"
+    except:
+        return "Contango"
 
 def fetch_cftc_data():
     print("Lade offizielle CFTC-Daten...")
@@ -94,12 +106,13 @@ def main():
             "weather": weather_map.get(ticker, "Neutral")
         }
 
+    # index.html modifizieren
     with open("index.html", "r", encoding="utf-8") as f:
         html_lines = f.readlines()
 
     new_lines = []
     for line in html_lines:
-        # Falls eine alte window.cotData Zuweisung existiert, überspringen wir sie
+        # Alte automatische Injektionen ohne Marker ausfiltern um Duplikate zu verhindern
         if "window.cotData = {" in line and "// COT_DATA_PLACEHOLDER" not in html_lines[html_lines.index(line)-1]:
             continue
         
@@ -112,7 +125,7 @@ def main():
     with open("index.html", "w", encoding="utf-8") as f:
         f.writelines(new_lines)
         
-    print("index.html erfolgreich ohne Regex aktualisiert!")
+    print("index.html erfolgreich aktualisiert!")
 
 if __name__ == "__main__":
     main()
