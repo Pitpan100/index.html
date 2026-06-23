@@ -47,8 +47,8 @@
         </div>
     </div>
     <script>
-        // Realistische 2026er Preisschätzungen als solide Fallbacks, falls Yahoo blockiert
-        const fallbackPrices = { "CL=F": 74.20, "NG=F": 2.45, "GC=F": 4155.00, "ZW=F": 610.00, "ZC=F": 445.00, "KC=F": 220.00, "CC=F": 8450.00 };
+        // Saubere, realistische Fallback-Preise
+        const fallbackPrices = { "CL=F": 74.20, "NG=F": 2.45, "GC=F": 2340.50, "ZW=F": 610.00, "ZC=F": 445.00, "KC=F": 220.00, "CC=F": 8450.00 };
         
         const defaultMetaData = {
             "CL=F": { name: "Rohöl (Crude Oil)", cotScore: 54, position: "Net-Long", seasonality: "Bullisch", structure: "Backwardation" },
@@ -76,17 +76,18 @@
         }
 
         async function fetchPrice(ticker) {
+            // Verhindert das Überschreiben, wenn der User schon weitergeblättert hat
+            if (ticker !== tickers[currentIndex]) return;
+
             try {
-                // Nutzung eines stabilen, CORS-freundlichen Proxies für Apple WebKit (iOS/iPadOS)
-                const url = `https://query1.finance.yahoo.com/v7/finance/options/${ticker}`;
-                const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}&_nocache=${Date.now()}`);
-                const wrapper = await response.json();
-                const data = JSON.parse(wrapper.contents);
+                const response = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1d&interval=1m&_nocache=${Date.now()}`);
+                const data = await response.json();
                 
-                if (data?.optionChain?.result?.[0]?.quote) {
-                    const quote = data.optionChain.result[0].quote;
-                    let price = quote.regularMarketPrice;
-                    let currency = quote.currency || "USD";
+                if (ticker !== tickers[currentIndex]) return; // Erneuter Check nach dem Netzwerk-Request
+
+                if (data?.chart?.result?.[0]) {
+                    let price = data.chart.result[0].meta.regularMarketPrice;
+                    let currency = data.chart.result[0].meta.currency || "USD";
                     
                     if (ticker === "CC=F" && price < 1000) {
                         price *= 25; 
@@ -99,7 +100,7 @@
                     throw new Error();
                 }
             } catch {
-                // Fallback greift jetzt auf das korrekte 2026er Preisniveau zurück
+                if (ticker !== tickers[currentIndex]) return;
                 const fPrice = fallbackPrices[ticker];
                 document.getElementById('comm-price').innerText = fPrice.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " USD";
                 updateLiveWeather(ticker, fPrice);
