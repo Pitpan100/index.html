@@ -3,61 +3,73 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Commodity Intelligence</title>
+    <title>Realtime Commodity Terminal</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background: #0b0f19; color: #e2e8f0; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
-        .card { max-width: 450px; margin: auto; background: #0f172a; border-radius: 16px; padding: 20px; border: 1px solid #1e293b; }
-        select { width: 100%; padding: 15px; background: #1e293b; color: white; border-radius: 10px; border: 1px solid #334155; font-weight: bold; margin-bottom: 15px; }
-        #chart { width: 100%; height: 250px; background: #020617; border-radius: 8px; margin-bottom: 15px; }
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .box { background: #1e293b; padding: 10px; border-radius: 8px; text-align: center; }
-        .label { font-size: 9px; text-transform: uppercase; color: #64748b; }
-        .val { font-size: 13px; font-weight: bold; color: #fff; margin-top: 4px; }
-        .news { margin-top: 15px; font-size: 12px; color: #94a3b8; line-height: 1.4; border-top: 1px solid #1e293b; padding-top: 10px; }
+        body { background: #0b0f19; color: #e2e8f0; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
+        .card { max-width: 450px; margin: auto; background: #0f172a; border-radius: 16px; padding: 16px; border: 1px solid #1e293b; }
+        select { width: 100%; padding: 12px; background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 8px; font-weight: 600; margin-bottom: 15px; }
+        #chart { width: 100%; height: 250px; background: #020617; border-radius: 8px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .box { background: #1e293b; padding: 8px; border-radius: 6px; text-align: center; }
+        .label { font-size: 9px; color: #64748b; text-transform: uppercase; }
+        .val { font-size: 13px; font-weight: bold; color: #fff; }
+        .news { margin-top: 15px; font-size: 12px; color: #94a3b8; padding-top: 10px; border-top: 1px solid #1e293b; line-height: 1.5; }
     </style>
 </head>
 <body>
     <div class="card">
-        <select id="assets" onchange="update()"></select>
+        <select id="ticker" onchange="fetchData()">
+            <option value="GC=F">Gold</option>
+            <option value="CL=F">Rohöl</option>
+            <option value="SI=F">Silber</option>
+            <option value="HG=F">Kupfer</option>
+            <option value="ZS=F">Soja</option>
+            <option value="ZC=F">Mais</option>
+        </select>
         <div id="chart"></div>
-        <div class="data-grid">
-            <div class="box"><div class="label">COT Score</div><div class="val" id="cot">--</div></div>
-            <div class="box"><div class="label">Position</div><div class="val" id="pos">--</div></div>
-            <div class="box"><div class="label">Saisonalität</div><div class="val" id="sea">--</div></div>
-            <div class="box"><div class="label">Terminkurve</div><div class="val" id="str">--</div></div>
+        <div class="grid">
+            <div class="box"><div class="label">Preis (USD)</div><div class="val" id="price">--</div></div>
+            <div class="box"><div class="label">Volumen</div><div class="val" id="vol">--</div></div>
         </div>
-        <div class="news" id="news">📰 Lade Marktdaten...</div>
+        <div class="news" id="news">Lade Echtzeit-Daten...</div>
     </div>
 
     <script>
-        const db = {
-            "Gold": { cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Zentralbank-Käufe stützen. Zinsentscheidungen drücken auf den Preis." },
-            "Soja": { cot: "72/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "Starke Exportnachfrage, aber Ernteerwartungen stabilisieren den Markt." }
-            // Hier fügst du einfach deine weiteren Assets hinzu
-        };
-
-        const sel = document.getElementById('assets');
-        Object.keys(db).forEach(k => sel.innerHTML += `<option value="${k}">${k}</option>`);
-
-        // Chart initialisieren
         const chart = LightweightCharts.createChart(document.getElementById('chart'), {
             width: 418, height: 250, layout: { background: { color: '#020617' }, textColor: '#94a3b8' }
         });
         const candleSeries = chart.addCandlestickSeries();
 
-        function update() {
-            const v = db[sel.value];
-            document.getElementById('cot').innerText = v.cot;
-            document.getElementById('pos').innerText = v.pos;
-            document.getElementById('sea').innerText = v.sea;
-            document.getElementById('str').innerText = v.str;
-            document.getElementById('news').innerText = "📰 " + v.news;
+        async function fetchData() {
+            const symbol = document.getElementById('ticker').value;
+            // Nutze einen Proxy, um die CORS-Blockade des iPads zu umgehen
+            const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?range=1mo&interval=1d`;
             
-            // Hier würde die echte Datenanbindung an deine API kommen
-            candleSeries.setData([{ time: '2023-06-01', open: 1900, high: 1950, low: 1890, close: 1920 }]);
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const result = data.chart.result[0];
+                const meta = result.meta;
+                const quotes = result.indicators.quote[0];
+                
+                document.getElementById('price').innerText = meta.regularMarketPrice.toFixed(2);
+                document.getElementById('vol').innerText = quotes.volume[quotes.volume.length-1].toLocaleString();
+                document.getElementById('news').innerText = "📰 Live-Update für " + meta.symbol + ": Marktstatus " + meta.exchangeName;
+
+                const chartData = quotes.close.map((c, i) => ({
+                    time: result.timestamp[i],
+                    open: quotes.open[i],
+                    high: quotes.high[i],
+                    low: quotes.low[i],
+                    close: c
+                }));
+                candleSeries.setData(chartData);
+            } catch (e) {
+                document.getElementById('news').innerText = "⚠️ Fehler: Verbindung zum Daten-Server blockiert.";
+            }
         }
-        update();
+        fetchData();
     </script>
 </body>
 </html>
