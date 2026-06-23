@@ -2,53 +2,36 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>COMMODITY.INTELLIGENCE | PRO DASHBOARD</title>
+    <title>COMMODITY.INTELLIGENCE | LIVE</title>
     <style>
         body { background: #0b0f19; color: #fff; font-family: sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 1400px; margin: 0 auto; }
-        h1 { font-size: 24px; margin-bottom: 20px; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
-        table { width: 100%; border-collapse: collapse; background: #121826; border-radius: 8px; overflow: hidden; margin-bottom: 20px; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #1e293b; }
-        th { background: #1e293b; color: #94a3b8; text-transform: uppercase; font-size: 12px; }
-        .bullish { color: #22c55e; } .bearish { color: #ef4444; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card { background: #121826; border: 1px solid #1e293b; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>COMMODITY.INTELLIGENCE | DATA MATRIX</h1>
-    
-    <table>
-        <thead>
-            <tr>
-                <th>Asset</th>
-                <th>Live Kurs</th>
-                <th>COT Score</th>
-                <th>Terminstruktur</th>
-                <th>Saisonalität</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr><td>Kakao (CC)</td><td>...</td><td>65% (Long)</td><td>Backwardation</td><td class="bullish">Bullisch</td></tr>
-            <tr><td>Kaffee (KC)</td><td>...</td><td>40% (Short)</td><td>Contango</td><td class="bearish">Neutral</td></tr>
-            <tr><td>Zucker (SB)</td><td>...</td><td>55% (Neutral)</td><td>Backwardation</td><td class="bullish">Bullisch</td></tr>
-            <tr><td>Sojabohnen (ZS)</td><td>...</td><td>30% (Short)</td><td>Contango</td><td class="bearish">Bearisch</td></tr>
-            <tr><td>Kupfer (HG)</td><td>...</td><td>60% (Long)</td><td>Backwardation</td><td class="bullish">Bullisch</td></tr>
-            <tr><td>Rohöl (CL)</td><td>...</td><td>45% (Neutral)</td><td>Contango</td><td class="bearish">Bearisch</td></tr>
-        </tbody>
-    </table>
+    <div class="card">
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
+        {
+          "width": "100%", "height": 500, "colorTheme": "dark", "locale": "de",
+          "symbolsGroups": [ { "name": "Rohstoffe Echtzeit", "symbols": [
+            { "name": "ICEUS:CC1!", "displayName": "Kakao" },
+            { "name": "ICEUS:KC1!", "displayName": "Kaffee" },
+            { "name": "ICEUS:SB1!", "displayName": "Zucker" },
+            { "name": "CBOT:ZS1!", "displayName": "Sojabohnen" },
+            { "name": "COMEX:HG1!", "displayName": "Kupfer" },
+            { "name": "NYMEX:CL1!", "displayName": "Rohöl WTI" },
+            { "name": "COMEX:GC1!", "displayName": "Gold" },
+            { "name": "CBOT:ZC1!", "displayName": "Mais" }
+          ] } ]
+        }
+        </script>
+    </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-        <div class="card" style="background:#121826; padding:20px; border-radius:8px;">
-            <h3 style="margin-top:0;">MARKT-NEWS</h3>
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-            { "feedMode": "market", "market": "commodities", "colorTheme": "dark", "width": "100%", "height": "400" }
-            </script>
-        </div>
-        <div class="card" style="background:#121826; padding:20px; border-radius:8px;">
-            <h3 style="margin-top:0;">AGRAR-WETTER</h3>
-            <iframe src="https://embed.windy.com/" width="100%" height="400" frameborder="0"></iframe>
-        </div>
+    <div class="card">
+        <iframe src="https://www.windy.com" width="100%" height="400" frameborder="0"></iframe>
     </div>
 </div>
 </body>
