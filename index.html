@@ -10,12 +10,9 @@
         .card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; width: 100%; max-width: 380px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
         
         /* Extremwert-Ticker-Band */
-        .ticker-wrap { background: #020617; border: 1px solid #ef4444; border-radius: 8px; padding: 6px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; font-size: 11px; font-weight: bold; color: #f87171; display: none; cursor: pointer; }
-        .ticker { display: inline-block; animation: marquee 70s linear infinite; padding-left: 100%; }
-        @keyframes marquee { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
-
-        /* CSS-Klasse zum Pausieren */
-        .paused { animation-play-state: paused !important; }
+        .ticker-wrap { background: #020617; border: 1px solid #ef4444; border-radius: 8px; padding: 6px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; font-size: 11px; font-weight: bold; color: #f87171; display: none; cursor: pointer; position: relative; width: 100%; height: 27px; }
+        /* CSS-Animation entfernt für 100% iPad-Kompatibilität */
+        .ticker { display: inline-block; position: absolute; white-space: nowrap; will-change: transform; left: 0; top: 50%; transform: translateY(-50%); }
 
         .header { border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px; text-align: center; }
         .header h1 { font-size: 19px; font-weight: 800; color: #fbbf24; margin: 0 0 4px 0; }
@@ -93,6 +90,11 @@
         const tickers = Object.keys(window.cotData);
         let currentTicker = tickers[0];
 
+        // JS Ticker Variablen
+        let isTickerPaused = false;
+        let tickerPos = 0;
+        const tickerSpeed = 0.6; // Kontrolliert die Langsamkeit (kleiner = langsamer)
+
         function initApp() {
             const selectEl = document.getElementById('asset-select');
             selectEl.innerHTML = "";
@@ -107,6 +109,10 @@
 
             buildGlobalAlerts();
             updateUI();
+            
+            // Startet die JS-Animationsschleife
+            tickerPos = document.getElementById('alert-wrap').offsetWidth;
+            requestAnimationFrame(animateTicker);
         }
 
         function buildGlobalAlerts() {
@@ -124,17 +130,33 @@
             const tickerEl = document.getElementById('alert-ticker');
 
             if (alerts.length > 0) {
-                tickerEl.innerText = alerts.join("  |  ") + "  |  " + alerts.join("  |  ");
+                tickerEl.innerText = alerts.join("   |   ") + "   |   ";
                 wrap.style.display = "block";
             } else {
                 wrap.style.display = "none";
             }
         }
 
-        // Neue Toggle-Funktion für das iPad (Ein Klick stoppt, nächster Klick startet)
+        // Native JavaScript-Schleife für flüssiges Bewegen und bombenfestes Pausieren
+        function animateTicker() {
+            if (!isTickerPaused) {
+                const tickerEl = document.getElementById('alert-ticker');
+                const wrapEl = document.getElementById('alert-wrap');
+                
+                tickerPos -= tickerSpeed;
+                
+                // Reset, wenn der Text ganz links herausgewandert ist
+                if (tickerPos < -tickerEl.offsetWidth) {
+                    tickerPos = wrapEl.offsetWidth;
+                }
+                
+                tickerEl.style.transform = `translate3d(${tickerPos}px, -50%, 0)`;
+            }
+            requestAnimationFrame(animateTicker);
+        }
+
         function toggleTicker() {
-            const ticker = document.getElementById('alert-ticker');
-            ticker.classList.toggle('paused');
+            isTickerPaused = !isTickerPaused;
         }
 
         function getDynamicWeather(ticker, currentPrice) {
