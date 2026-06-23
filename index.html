@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Commodity Intelligence - Cocoa Dashboard</title>
     <style>
-        /* Grundlegendes Styling im Dark-Mode */
+        /* Grundlegendes Styling im Dark-Mode (basierend auf image.png) */
         body {
             background-color: #0b0f19;
             color: #ffffff;
@@ -66,6 +66,8 @@
             height: 500px;
             width: 100%;
             position: relative;
+            border-radius: 4px;
+            overflow: hidden;
         }
         .bottom-grid {
             display: grid;
@@ -95,32 +97,23 @@
     <!-- Haupt-Grid: Chart links, Wetter & News rechts -->
     <div class="grid-layout">
         
-        <!-- LINKER BLOCK: Der reparierte Chart -->
+        <!-- LINKER BLOCK: Der neue Chart (KOMPLETT OHNE TRADINGVIEW) -->
         <div class="card">
-            <div class="card-title">Kakao (COCOA) Live-Chart</div>
+            <div class="card-title">Kakao (COCOA) Live-Chart via Investing</div>
             <div class="chart-container">
                 
-                <!-- TRADINGVIEW WIDGET START -->
-                <div id="tradingview_cocoa_fixed" style="height: 100%; width: 100%;"></div>
-                <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
-                <script type="text/javascript">
-                new TradingView.widget({
-                    "width": "100%",
-                    "height": "100%",
-                    "symbol": "CAPITALCOM:COCOA", // Ersetzt ICEUS:CC1! gegen sperrenfreie Daten
-                    "interval": "D",
-                    "timezone": "Europe/Berlin",
-                    "theme": "dark",
-                    "style": "1",
-                    "locale": "de",
-                    "toolbar_bg": "#f1f3f6",
-                    "enable_publishing": false,
-                    "hide_side_toolbar": false,
-                    "allow_symbol_change": true,
-                    "container_id": "tradingview_cocoa_fixed"
-                });
-                </script>
-                <!-- TRADINGVIEW WIDGET END -->
+                <!-- INVESTING.COM LIVE CHART IFRAME START -->
+                <iframe 
+                    src="https://de.widgets.investing.com/live-charts?theme=darkTheme&pairs=8874" 
+                    width="100%" 
+                    height="100%" 
+                    frameborder="0" 
+                    allowtransparency="true" 
+                    marginwidth="0" 
+                    marginheight="0"
+                    style="border: none; width: 100%; height: 100%; background-color: #121826;">
+                </iframe>
+                <!-- INVESTING.COM LIVE CHART IFRAME ENDE -->
 
             </div>
         </div>
@@ -130,9 +123,8 @@
             <!-- Agrar-Wetter -->
             <div class="card" style="flex: 1;">
                 <div class="card-title">AGRAR-WETTER / RADAR</div>
-                <!-- Hier dein funktionierender Wetter-Iframe/Inhalt -->
                 <div style="height: 200px; background: #1e293b; border-radius: 4px; display: flex; align-items: center; justify-content: center; color: #64748b;">
-                    [Hier Wetter-Widget / Windy einfügen]
+                    [Hier Windy / Wetter-Widget einfügen]
                 </div>
             </div>
             
