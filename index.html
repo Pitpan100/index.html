@@ -11,15 +11,42 @@
         
         /* Extremwert-Ticker-Band */
         .ticker-wrap { background: #020617; border: 1px solid #ef4444; border-radius: 8px; padding: 6px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; font-size: 11px; font-weight: bold; color: #f87171; display: none; cursor: pointer; position: relative; width: 100%; height: 27px; }
-        /* CSS-Animation entfernt für 100% iPad-Kompatibilität */
         .ticker { display: inline-block; position: absolute; white-space: nowrap; will-change: transform; left: 0; top: 50%; transform: translateY(-50%); }
 
         .header { border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px; text-align: center; }
         .header h1 { font-size: 19px; font-weight: 800; color: #fbbf24; margin: 0 0 4px 0; }
         .header p { font-size: 11px; color: #94a3b8; margin: 0; }
         
-        .select-container { margin-bottom: 16px; }
-        .styled-select { width: 100%; background-color: #1e293b; border: 1px solid #334155; color: #f1f5f9; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: bold; outline: none; cursor: pointer; -webkit-appearance: none; appearance: none; text-align-last: center; }
+        /* Dropdown-Container für den künstlichen Pfeil */
+        .select-container { margin-bottom: 16px; position: relative; width: 100%; }
+        
+        /* Der stilisierte Pfeil rechts im Menü */
+        .select-container::after {
+            content: "▼";
+            font-size: 10px;
+            color: #fbbf24; /* Passend zum Gold-Ton der Überschrift */
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none; /* Klicks gehen durch den Pfeil direkt aufs Select */
+        }
+        
+        .styled-select { 
+            width: 100%; 
+            background-color: #1e293b; 
+            border: 1px solid #334155; 
+            color: #f1f5f9; 
+            padding: 12px 40px 12px 16px; /* Rechts mehr Platz gelassen für den Pfeil */
+            border-radius: 10px; 
+            font-size: 14px; 
+            font-weight: bold; 
+            outline: none; 
+            cursor: pointer; 
+            -webkit-appearance: none; /* Entfernt die unschönen iOS-Standard-Pfeile */
+            appearance: none; 
+            text-align: left; /* Auf Linksbündig geändert, damit es professioneller mit dem Pfeil aussieht */
+        }
         
         .price-box { background-color: #020617; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 16px; }
         .commodity-name { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
@@ -90,10 +117,9 @@
         const tickers = Object.keys(window.cotData);
         let currentTicker = tickers[0];
 
-        // JS Ticker Variablen
         let isTickerPaused = false;
         let tickerPos = 0;
-        const tickerSpeed = 0.6; // Kontrolliert die Langsamkeit (kleiner = langsamer)
+        const tickerSpeed = 0.6;
 
         function initApp() {
             const selectEl = document.getElementById('asset-select');
@@ -110,7 +136,6 @@
             buildGlobalAlerts();
             updateUI();
             
-            // Startet die JS-Animationsschleife
             tickerPos = document.getElementById('alert-wrap').offsetWidth;
             requestAnimationFrame(animateTicker);
         }
@@ -137,7 +162,6 @@
             }
         }
 
-        // Native JavaScript-Schleife für flüssiges Bewegen und bombenfestes Pausieren
         function animateTicker() {
             if (!isTickerPaused) {
                 const tickerEl = document.getElementById('alert-ticker');
@@ -145,7 +169,6 @@
                 
                 tickerPos -= tickerSpeed;
                 
-                // Reset, wenn der Text ganz links herausgewandert ist
                 if (tickerPos < -tickerEl.offsetWidth) {
                     tickerPos = wrapEl.offsetWidth;
                 }
