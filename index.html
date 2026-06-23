@@ -11,12 +11,12 @@
         .price-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px; }
         .price-title { font-size: 18px; font-weight: bold; }
         .price-val { font-size: 18px; font-weight: bold; color: #00ff66; }
-        #canvasContainer { width: 100%; background: #000; border-radius: 8px; border: 1px solid #1a1a1a; margin-bottom: 12px; }
-        canvas { display: block; width: 100%; height: 200px; }
+        #canvasContainer { width: 100%; background: #000; border-radius: 8px; border: 1px solid #1a1a1a; margin-bottom: 12px; position: relative; }
+        canvas { display: block; width: 100%; height: 230px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         .box { background: #121212; padding: 10px; border-radius: 6px; border: 1px solid #1c1c1c; }
         .label { font-size: 8px; color: #666; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
-        .val { font-size: 12px; font-weight: bold; color: #fff; margin-top: 3px; }
+        .val { font-size: 11px; font-weight: bold; color: #fff; margin-top: 3px; }
         .val.green { color: #00ff66; }
         .news-panel { background: #121212; padding: 10px; border-radius: 6px; border: 1px solid #1c1c1c; }
         .news-title { font-size: 9px; color: #666; text-transform: uppercase; font-weight: bold; margin-bottom: 6px; }
@@ -34,14 +34,14 @@
         <option value="SI=F" data-name="Silver" data-lat="23.17" data-lon="-102.86">Silber (Zacatecas Region)</option>
         <option value="HG=F" data-name="Copper" data-lat="-24.27" data-lon="-69.07">Kupfer (Escondida Mine)</option>
         <option value="NG=F" data-name="Natural Gas" data-lat="29.99" data-lon="-92.03">Erdgas (Henry Hub)</option>
-        <option value="ZS=F" data-name="Soybeans" data-lat="41.59" data-lon="-93.60">Sojabohnen (Iowa Corn/Soy Belt)</option>
+        <option value="ZS=F" data-name="Soybeans" data-lat="41.59" data-lon="-93.60">Sojabohnen (Iowa Belt)</option>
         <option value="ZC=F" data-name="Corn" data-lat="40.00" data-lon="-89.00">Mais (Illinois Farming Hub)</option>
         <option value="ZW=F" data-name="Wheat" data-lat="38.84" data-lon="-97.61">Weizen (Kansas Crop Region)</option>
         <option value="KC=F" data-name="Coffee" data-lat="-21.60" data-lon="-45.50">Kaffee (Sul de Minas)</option>
         <option value="CC=F" data-name="Cocoa" data-lat="6.82" data-lon="-5.28">Kakao (Elfenbeinküste Hub)</option>
-        <option value="LE=F" data-name="Live Cattle" data-lat="35.22" data-lon="-101.83">Lebendrind (Amarillo Texas Yards)</option>
-        <option value="LBS=F" data-name="Lumber" data-lat="53.91" data-lon="-122.74">Holz (British Columbia Forestry)</option>
-        <option value="HO=F" data-name="Heating Oil" data-lat="40.63" data-lon="-74.24">Heizöl (New York Harbor Hub)</option>
+        <option value="LE=F" data-name="Live Cattle" data-lat="35.22" data-lon="-101.83">Lebendrind (Amarillo Yards)</option>
+        <option value="LBS=F" data-name="Lumber" data-lat="53.91" data-lon="-122.74">Holz (British Columbia)</option>
+        <option value="HO=F" data-name="Heating Oil" data-lat="40.63" data-lon="-74.24">Heizöl (New York Harbor)</option>
     </select>
 
     <div class="price-bar">
@@ -50,7 +50,7 @@
     </div>
 
     <div id="canvasContainer">
-        <canvas id="chartCanvas" width="432" height="200"></canvas>
+        <canvas id="chartCanvas" width="432" height="230"></canvas>
     </div>
 
     <div class="grid">
@@ -68,8 +68,7 @@
 </div>
 
 <script>
-    // Gestochen scharfer, nativer HTML5-Canvas-Chart (Absolut immun gegen iOS-Sperren)
-    function drawCanvasChart(candles) {
+    function drawVolumeProfileAndChart(candles) {
         const canvas = document.getElementById('chartCanvas');
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -81,26 +80,90 @@
         const maxPrice = Math.max(...highs);
         const priceRange = maxPrice - minPrice || 1;
         
-        const padding = 12;
-        const chartHeight = canvas.height - (padding * 2);
-        const candleWidth = (canvas.width / candles.length) - 2;
+        const chartPaddingTop = 15;
+        const chartPaddingBottom = 40;
+        const usableHeight = canvas.height - chartPaddingTop - chartPaddingBottom;
+        
+        const numBins = 24;
+        const bins = Array(numBins).fill(0);
+        const binSize = priceRange / numBins;
+        
+        candles.forEach(c => {
+            if(!c.volume || c.low == null || c.high == null) return;
+            let startBin = Math.floor((c.low - minPrice) / binSize);
+            let endBin = Math.floor((c.high - minPrice) / binSize);
+            startBin = Math.max(0, Math.min(startBin, numBins - 1));
+            endBin = Math.max(0, Math.min(endBin, numBins - 1));
+            
+            const intersectCount = (endBin - startBin) + 1;
+            const allocatedVol = c.volume / intersectCount;
+            for(let b = startBin; b <= endBin; b++) { bins[b] += allocatedVol; }
+        });
+        
+        let maxBinVol = 0, pocBinIndex = 0;
+        for(let b = 0; b < numBins; b++) {
+            if(bins[b] > maxBinVol) { maxBinVol = bins[b]; pocBinIndex = b; }
+        }
+        
+        const totalVol = bins.reduce((a, b) => a + b, 0);
+        const targetVol = totalVol * 0.70;
+        let vaVol = bins[pocBinIndex];
+        let minVaBin = pocBinIndex, maxVaBin = pocBinIndex;
+        
+        while(vaVol < targetVol) {
+            let upVol = (maxVaBin + 1 < numBins) ? bins[maxVaBin + 1] : -1;
+            let downVol = (minVaBin - 1 >= 0) ? bins[minVaBin - 1] : -1;
+            if(upVol === -1 && downVol === -1) break;
+            if(upVol >= downVol) { maxVaBin++; vaVol += upVol; } 
+            else { minVaBin--; vaVol += downVol; }
+        }
+        
+        const yVAH = chartPaddingTop + usableHeight * (1 - ((minPrice + (maxVaBin + 1) * binSize) - minPrice) / priceRange);
+        const yVAL = chartPaddingTop + usableHeight * (1 - ((minPrice + minVaBin * binSize) - minPrice) / priceRange);
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.05)';
+        ctx.fillRect(0, yVAH, canvas.width, yVAL - yVAH);
+        
+        for(let b = 0; b < numBins; b++) {
+            const binVol = bins[b];
+            const barWidth = (binVol / maxBinVol) * 110;
+            const yTop = chartPaddingTop + usableHeight * (1 - ((b + 1) * binSize) / priceRange);
+            const barHeight = (chartPaddingTop + usableHeight * (1 - (b * binSize) / priceRange)) - yTop;
+            
+            const isInValueArea = (b >= minVaBin && b <= maxVaBin);
+            ctx.fillStyle = isInValueArea ? 'rgba(56, 189, 248, 0.22)' : 'rgba(255, 255, 255, 0.06)';
+            ctx.fillRect(canvas.width - barWidth, yTop + 0.5, barWidth, barHeight - 0.5);
+        }
+        
+        const yPOC = chartPaddingTop + usableHeight * (1 - ((minPrice + (pocBinIndex + 0.5) * binSize) - minPrice) / priceRange);
+        ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+        ctx.beginPath(); ctx.moveTo(0, yPOC); ctx.lineTo(canvas.width, yPOC); ctx.stroke(); ctx.setLineDash([]);
+        
+        ctx.fillStyle = '#666'; ctx.font = '9px monospace';
+        ctx.fillText("VAH", 4, yVAH - 3); ctx.fillText("VAL", 4, yVAL + 10);
+        ctx.fillStyle = '#ef4444'; ctx.fillText("POC", 4, yPOC - 3);
+
+        const maxDailyVol = Math.max(...candles.map(c => c.volume || 0));
+        const candleWidth = (canvas.width / candles.length) - 1.5;
         
         candles.forEach((c, i) => {
-            const x = i * (canvas.width / candles.length) + 1;
-            const yHigh = padding + chartHeight * (1 - (c.high - minPrice) / priceRange);
-            const yLow = padding + chartHeight * (1 - (c.low - minPrice) / priceRange);
-            const yOpen = padding + chartHeight * (1 - (c.open - minPrice) / priceRange);
-            const yClose = padding + chartHeight * (1 - (c.close - minPrice) / priceRange);
-            
+            const x = i * (canvas.width / candles.length) + 0.5;
             const isBullish = c.close >= c.open;
+            
+            if (c.volume) {
+                const volBarHeight = (c.volume / maxDailyVol) * 28;
+                ctx.fillStyle = isBullish ? 'rgba(0, 255, 102, 0.18)' : 'rgba(255, 51, 85, 0.18)';
+                ctx.fillRect(x, canvas.height - volBarHeight - 5, candleWidth, volBarHeight);
+            }
+            
+            const yHigh = chartPaddingTop + usableHeight * (1 - (c.high - minPrice) / priceRange);
+            const yLow = chartPaddingTop + usableHeight * (1 - (c.low - minPrice) / priceRange);
+            const yOpen = chartPaddingTop + usableHeight * (1 - (c.open - minPrice) / priceRange);
+            const yClose = chartPaddingTop + usableHeight * (1 - (c.close - minPrice) / priceRange);
+            
             ctx.strokeStyle = isBullish ? '#00ff66' : '#ff3355';
             ctx.fillStyle = isBullish ? '#00ff66' : '#ff3355';
             
-            ctx.beginPath();
-            ctx.moveTo(x + candleWidth/2, yHigh);
-            ctx.lineTo(x + candleWidth/2, yLow);
-            ctx.stroke();
-            
+            ctx.beginPath(); ctx.moveTo(x + candleWidth/2, yHigh); ctx.lineTo(x + candleWidth/2, yLow); ctx.stroke();
             const bodyHeight = Math.max(Math.abs(yClose - yOpen), 1);
             ctx.fillRect(x, Math.min(yOpen, yClose), candleWidth, bodyHeight);
         });
@@ -110,17 +173,15 @@
         const select = document.getElementById('sel');
         const ticker = select.value;
         const selectedOption = select.options[select.selectedIndex];
-        
         document.getElementById('assetTitle').innerText = selectedOption.text.split(' (')[0];
         
-        try { fetchRealtimePriceAndChart(ticker); } catch(e) {}
+        try { fetchRealtimePriceAndOrderflow(ticker); } catch(e) {}
         try { fetchBackendData(ticker); } catch(e) {}
         try { fetchLiveWeather(selectedOption.dataset.lat, selectedOption.dataset.lon); } catch(e) {}
         try { fetchLiveNews(selectedOption.dataset.name); } catch(e) {}
     }
 
-    // 1. ECHTE HISTORISCHE & LIVE-KURSE (Yahoo Finance Direct API)
-    async function fetchRealtimePriceAndChart(ticker) {
+    async function fetchRealtimePriceAndOrderflow(ticker) {
         const url = `https://corsproxy.io/?https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
         const res = await fetch(url);
         const data = await res.json();
@@ -131,17 +192,20 @@
         document.getElementById('livePrice').innerText = meta.regularMarketPrice ? meta.regularMarketPrice.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "--";
 
         const candleData = timestamps.map((t, i) => ({
-            open: quotes.open[i], high: quotes.high[i], low: quotes.low[i], close: quotes.close[i]
+            open: quotes.open[i], high: quotes.high[i], low: quotes.low[i], close: quotes.close[i], volume: quotes.volume[i]
         })).filter(c => c.open != null && c.close != null);
         
-        drawCanvasChart(candleData);
+        drawVolumeProfileAndChart(candleData);
     }
 
-    // 2. LIVE INTEGRATION DEINER DATA.JSON (Aus deinem Python-Skript)
     async function fetchBackendData(ticker) {
+        // Cache-Busting, damit das iPad immer die frischeste Datei zieht
         const url = `./data.json?t=${new Date().getTime()}`;
         try {
             const res = await fetch(url);
+            if(!res.ok) {
+                throw new Error(`${res.status}: data.json fehlt im Repo`);
+            }
             const backend = await res.json();
             const assetData = backend[ticker];
             if (assetData) {
@@ -149,16 +213,21 @@
                 document.getElementById('term').innerText = assetData.term_structure || assetData.kurve || "N/A";
                 document.getElementById('inv').innerText = assetData.inventories || assetData.position || "N/A";
                 document.getElementById('sea').innerText = assetData.seasonality || assetData.saisonalitaet || "Neutral";
+            } else {
+                showErrorInFields("Key nicht in JSON");
             }
         } catch (e) {
-            document.getElementById('cot').innerText = "Update läuft...";
-            document.getElementById('term').innerText = "Update läuft...";
-            document.getElementById('inv').innerText = "Update läuft...";
-            document.getElementById('sea').innerText = "Update läuft...";
+            showErrorInFields(e.message.includes("404") ? "404: data.json fehlt" : "Warte auf Action...");
         }
     }
 
-    // 3. REALTIME WETTER AM ECHTEN FÖRDER-/ANBAU-ORT (Open-Meteo)
+    function showErrorInFields(msg) {
+        document.getElementById('cot').innerText = msg;
+        document.getElementById('term').innerText = msg;
+        document.getElementById('inv').innerText = msg;
+        document.getElementById('sea').innerText = msg;
+    }
+
     async function fetchLiveWeather(lat, lon) {
         const el = document.getElementById('weather');
         const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
@@ -166,19 +235,24 @@
         el.innerText = `${data.current_weather.temperature}°C | Wind: ${data.current_weather.windspeed} km/h`;
     }
 
-    // 4. MINDESTENS 3 ECHTE NEWS (Google News RSS Feed via JSON)
     async function fetchLiveNews(assetName) {
         const el = document.getElementById('news');
-        const feedUrl = encodeURIComponent(`https://news.google.com/rss/search?q=${assetName}+commodity+market&hl=de&gl=DE&ceid=DE:de`);
-        const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`);
-        const data = await res.json();
-        let html = '';
-        for (let i = 0; i < 3; i++) {
-            if (data.items && data.items[i]) {
-                html += `<div class="news-item"><a href="${data.items[i].link}" target="_blank">➔ ${data.items[i].title}</a></div>`;
+        // Bereinigung des Assetnamens für eine saubere Google-News Suche
+        const cleanName = assetName.split(' ')[0];
+        const feedUrl = encodeURIComponent(`https://news.google.com/rss/search?q=${cleanName}+commodity+market&hl=de&gl=DE&ceid=DE:de`);
+        try {
+            const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`);
+            const data = await res.json();
+            let html = '';
+            if(data.items && data.items.length > 0) {
+                for (let i = 0; i < Math.min(3, data.items.length); i++) {
+                    html += `<div class="news-item"><a href="${data.items[i].link}" target="_blank">➔ ${data.items[i].title}</a></div>`;
+                }
             }
+            el.innerHTML = html || "Keine aktuellen Nachrichten.";
+        } catch(e) {
+            el.innerHTML = "News-Schnittstelle blockiert.";
         }
-        el.innerHTML = html || "Keine aktuellen Nachrichten verfügbar.";
     }
 
     loadAssetData();
