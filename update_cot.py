@@ -24,14 +24,13 @@ def get_live_term_structure(ticker):
         
         clean = ticker.replace('=F', '')
         
-        # Dynamische Schwellenwerte: Liegt der Frontmonat signifikant über der historischen Basis,
-        # deutet das auf akute physische Verknappung (Backwardation) am Markt hin.
+        # Schwellenwerte zur Bestimmung von krisenbedingter Backwardation
         thresholds = {
-            "CC": 6500,   # Kakao historisch hoch -> Backwardation
-            "KC": 190,    # Kaffee über Basis -> Backwardation
-            "CL": 78,     # Rohöl Schwellenwert
-            "NG": 2.60,   # Erdgas bei starker Sommerhitze
-            "GC": 2350    # Gold bei starker physischer Nachfrage
+            "CC": 6500,
+            "KC": 190,
+            "CL": 78,
+            "NG": 2.60,
+            "GC": 2350
         }
         
         if clean in thresholds and price_front > thresholds[clean]:
@@ -106,26 +105,34 @@ def main():
             "weather": weather_map.get(ticker, "Neutral")
         }
 
-    # index.html modifizieren
+    # index.html als kompletter Textblock einlesen
     with open("index.html", "r", encoding="utf-8") as f:
-        html_lines = f.readlines()
+        html_content = f.read()
 
-    new_lines = []
-    for line in html_lines:
-        # Alte automatische Injektionen ohne Marker ausfiltern um Duplikate zu verhindern
-        if "window.cotData = {" in line and "// COT_DATA_PLACEHOLDER" not in html_lines[html_lines.index(line)-1]:
-            continue
-        
-        new_lines.append(line)
-        
-        if "// COT_DATA_PLACEHOLDER" in line:
-            json_data = json.dumps(output_data, ensure_ascii=False)
-            new_lines.append(f"        window.cotData = {json_data};\n")
+    marker = "// COT_DATA_PLACEHOLDER"
+    if marker not in html_content:
+        raise Exception("Fehler: Der Marker '// COT_DATA_PLACEHOLDER' wurde in der index.html nicht gefunden!")
+
+    # Teile die Datei am Marker auf
+    parts = html_content.split(marker)
+    
+    # Generiere die frische Datenzeile
+    json_data = json.dumps(output_data, ensure_ascii=False)
+    data_line = f"\n        window.cotData = {json_data};\n"
+    
+    # Bereinige den zweiten Teil, um eventuell alte, darunterliegende window.cotData Zuweisungen zu löschen
+    remaining_content = parts[1].lstrip()
+    if remaining_content.startswith("window.cotData ="):
+        # Schneide die alte Zeile bis zum Zeilenumbruch ab
+        remaining_content = remaining_content.split("\n", 1)[1]
+
+    # Setze die Datei sauber neu zusammen
+    new_html = parts[0] + marker + data_line + remaining_content
 
     with open("index.html", "w", encoding="utf-8") as f:
-        f.writelines(new_lines)
+        f.write(new_html)
         
-    print("index.html erfolgreich aktualisiert!")
+    print("index.html erfolgreich und robust aktualisiert!")
 
 if __name__ == "__main__":
     main()
