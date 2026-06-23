@@ -2,32 +2,34 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Commodity Intelligence Terminal</title>
     <style>
-        body { background: #050505; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
-        .container { max-width: 460px; margin: auto; background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 12px; padding: 14px; }
-        select { width: 100%; padding: 12px; background: #161616; color: #fff; border: 1px solid #2a2a2a; border-radius: 8px; font-weight: bold; font-size: 14px; margin-bottom: 12px; -webkit-appearance: none; }
+        body { background: #050505; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 10px; -webkit-font-smoothing: antialiased; }
+        .container { max-width: 460px; margin: auto; background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 12px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
+        select { width: 100%; padding: 12px; background: #161616; color: #fff; border: 1px solid #2a2a2a; border-radius: 8px; font-weight: bold; font-size: 14px; margin-bottom: 12px; -webkit-appearance: none; outline: none; cursor: pointer; }
         .price-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px; }
-        .price-title { font-size: 18px; font-weight: bold; }
-        .price-val { font-size: 18px; font-weight: bold; color: #00ff66; }
-        #canvasContainer { width: 100%; background: #000; border-radius: 8px; border: 1px solid #1a1a1a; margin-bottom: 12px; position: relative; }
+        .price-title { font-size: 18px; font-weight: bold; letter-spacing: -0.5px; }
+        .price-val { font-size: 18px; font-weight: bold; color: #00ff66; font-family: monospace; }
+        #canvasContainer { width: 100%; background: #000; border-radius: 8px; border: 1px solid #1a1a1a; margin-bottom: 12px; }
         canvas { display: block; width: 100%; height: 230px; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .box { background: #121212; padding: 10px; border-radius: 6px; border: 1px solid #1c1c1c; }
+        .box { background: #121212; padding: 10px; border-radius: 6px; border: 1px solid #1c1c1c; min-height: 42px; }
         .label { font-size: 8px; color: #666; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
-        .val { font-size: 11px; font-weight: bold; color: #fff; margin-top: 3px; }
+        .val { font-size: 11px; font-weight: bold; color: #fff; margin-top: 4px; line-height: 1.2; }
         .val.green { color: #00ff66; }
         .news-panel { background: #121212; padding: 10px; border-radius: 6px; border: 1px solid #1c1c1c; }
         .news-title { font-size: 9px; color: #666; text-transform: uppercase; font-weight: bold; margin-bottom: 6px; }
-        .news-item { font-size: 11px; margin-bottom: 6px; line-height: 1.3; border-bottom: 1px solid #1a1a1a; padding-bottom: 4px; }
+        .news-item { font-size: 11px; margin-bottom: 6px; line-height: 1.35; border-bottom: 1px solid #1a1a1a; padding-bottom: 5px; }
         .news-item:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
         .news-item a { color: #38bdf8; text-decoration: none; }
+        .news-item a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- Value-Zweige matchen exakt 1:1 die Keys deiner update_cot.py Python-Logik -->
     <select id="sel" onchange="loadAssetData()">
         <option value="GC=F" data-name="Gold" data-lat="40.81" data-lon="-115.76">Gold (Nevada Minen-Hub)</option>
         <option value="CL=F" data-name="Crude Oil" data-lat="35.98" data-lon="-96.77">Rohöl WTI (Cushing Hub)</option>
@@ -68,6 +70,7 @@
 </div>
 
 <script>
+    // 100% Autarker HTML5-Canvas Chart-Engine für Kerzen + Volumenprofil
     function drawVolumeProfileAndChart(candles) {
         const canvas = document.getElementById('chartCanvas');
         const ctx = canvas.getContext('2d');
@@ -81,9 +84,10 @@
         const priceRange = maxPrice - minPrice || 1;
         
         const chartPaddingTop = 15;
-        const chartPaddingBottom = 40;
+        const chartPaddingBottom = 40; 
         const usableHeight = canvas.height - chartPaddingTop - chartPaddingBottom;
         
+        // Volumenprofil (VPVR) mathematisch Clustern (24 Preis-Zonen)
         const numBins = 24;
         const bins = Array(numBins).fill(0);
         const binSize = priceRange / numBins;
@@ -100,11 +104,13 @@
             for(let b = startBin; b <= endBin; b++) { bins[b] += allocatedVol; }
         });
         
+        // Point of Control (POC) lokalisieren
         let maxBinVol = 0, pocBinIndex = 0;
         for(let b = 0; b < numBins; b++) {
             if(bins[b] > maxBinVol) { maxBinVol = bins[b]; pocBinIndex = b; }
         }
         
+        // Value Area (70% Volumenkorridor um den POC) kalkulieren
         const totalVol = bins.reduce((a, b) => a + b, 0);
         const targetVol = totalVol * 0.70;
         let vaVol = bins[pocBinIndex];
@@ -118,30 +124,35 @@
             else { minVaBin--; vaVol += downVol; }
         }
         
+        // Shading der Value Area zeichnen
         const yVAH = chartPaddingTop + usableHeight * (1 - ((minPrice + (maxVaBin + 1) * binSize) - minPrice) / priceRange);
         const yVAL = chartPaddingTop + usableHeight * (1 - ((minPrice + minVaBin * binSize) - minPrice) / priceRange);
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.05)';
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.04)';
         ctx.fillRect(0, yVAH, canvas.width, yVAL - yVAH);
         
+        // Horizontale Volumenbalken des Profils rendern
         for(let b = 0; b < numBins; b++) {
             const binVol = bins[b];
-            const barWidth = (binVol / maxBinVol) * 110;
+            const barWidth = (binVol / maxBinVol) * 110; 
             const yTop = chartPaddingTop + usableHeight * (1 - ((b + 1) * binSize) / priceRange);
             const barHeight = (chartPaddingTop + usableHeight * (1 - (b * binSize) / priceRange)) - yTop;
             
             const isInValueArea = (b >= minVaBin && b <= maxVaBin);
-            ctx.fillStyle = isInValueArea ? 'rgba(56, 189, 248, 0.22)' : 'rgba(255, 255, 255, 0.06)';
+            ctx.fillStyle = isInValueArea ? 'rgba(56, 189, 248, 0.20)' : 'rgba(255, 255, 255, 0.05)';
             ctx.fillRect(canvas.width - barWidth, yTop + 0.5, barWidth, barHeight - 0.5);
         }
         
+        // Rote Point of Control (POC) Linie generieren
         const yPOC = chartPaddingTop + usableHeight * (1 - ((minPrice + (pocBinIndex + 0.5) * binSize) - minPrice) / priceRange);
         ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
         ctx.beginPath(); ctx.moveTo(0, yPOC); ctx.lineTo(canvas.width, yPOC); ctx.stroke(); ctx.setLineDash([]);
         
-        ctx.fillStyle = '#666'; ctx.font = '9px monospace';
+        // Markierungen setzen
+        ctx.fillStyle = '#555'; ctx.font = '9px monospace';
         ctx.fillText("VAH", 4, yVAH - 3); ctx.fillText("VAL", 4, yVAL + 10);
         ctx.fillStyle = '#ef4444'; ctx.fillText("POC", 4, yPOC - 3);
 
+        // Vertikale klassische Volumenbalken am Boden rendern
         const maxDailyVol = Math.max(...candles.map(c => c.volume || 0));
         const candleWidth = (canvas.width / candles.length) - 1.5;
         
@@ -150,11 +161,12 @@
             const isBullish = c.close >= c.open;
             
             if (c.volume) {
-                const volBarHeight = (c.volume / maxDailyVol) * 28;
-                ctx.fillStyle = isBullish ? 'rgba(0, 255, 102, 0.18)' : 'rgba(255, 51, 85, 0.18)';
+                const volBarHeight = (c.volume / maxDailyVol) * 26;
+                ctx.fillStyle = isBullish ? 'rgba(0, 255, 102, 0.15)' : 'rgba(255, 51, 85, 0.15)';
                 ctx.fillRect(x, canvas.height - volBarHeight - 5, candleWidth, volBarHeight);
             }
             
+            // Preis-Kerzen (O, H, L, C) zeichnen
             const yHigh = chartPaddingTop + usableHeight * (1 - (c.high - minPrice) / priceRange);
             const yLow = chartPaddingTop + usableHeight * (1 - (c.low - minPrice) / priceRange);
             const yOpen = chartPaddingTop + usableHeight * (1 - (c.open - minPrice) / priceRange);
@@ -181,6 +193,7 @@
         try { fetchLiveNews(selectedOption.dataset.name); } catch(e) {}
     }
 
+    // Live- & Historiendaten via Yahoo Finance API Proxy
     async function fetchRealtimePriceAndOrderflow(ticker) {
         const url = `https://corsproxy.io/?https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
         const res = await fetch(url);
@@ -198,14 +211,13 @@
         drawVolumeProfileAndChart(candleData);
     }
 
+    // Bindung an deine automatisierte data.json von GitHub Actions (mit Cache-Busting)
     async function fetchBackendData(ticker) {
-        // Cache-Busting, damit das iPad immer die frischeste Datei zieht
         const url = `./data.json?t=${new Date().getTime()}`;
         try {
             const res = await fetch(url);
-            if(!res.ok) {
-                throw new Error(`${res.status}: data.json fehlt im Repo`);
-            }
+            if(!res.ok) throw new Error(`${res.status}: Datei fehlt`);
+            
             const backend = await res.json();
             const assetData = backend[ticker];
             if (assetData) {
@@ -214,10 +226,10 @@
                 document.getElementById('inv').innerText = assetData.inventories || assetData.position || "N/A";
                 document.getElementById('sea').innerText = assetData.seasonality || assetData.saisonalitaet || "Neutral";
             } else {
-                showErrorInFields("Key nicht in JSON");
+                showErrorInFields("Datenfehler");
             }
         } catch (e) {
-            showErrorInFields(e.message.includes("404") ? "404: data.json fehlt" : "Warte auf Action...");
+            showErrorInFields(e.message.includes("404") ? "Warte auf JSON..." : "Update läuft...");
         }
     }
 
@@ -228,6 +240,7 @@
         document.getElementById('sea').innerText = msg;
     }
 
+    // Geografisches Wetter der physischen Hauptumschlagplätze via Open-Meteo API
     async function fetchLiveWeather(lat, lon) {
         const el = document.getElementById('weather');
         const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
@@ -235,10 +248,10 @@
         el.innerText = `${data.current_weather.temperature}°C | Wind: ${data.current_weather.windspeed} km/h`;
     }
 
+    // Realtime News über bereinigten Google News Feed
     async function fetchLiveNews(assetName) {
         const el = document.getElementById('news');
-        // Bereinigung des Assetnamens für eine saubere Google-News Suche
-        const cleanName = assetName.split(' ')[0];
+        const cleanName = assetName.split(' ')[0]; // Entfernt Ortszusätze aus der Suche
         const feedUrl = encodeURIComponent(`https://news.google.com/rss/search?q=${cleanName}+commodity+market&hl=de&gl=DE&ceid=DE:de`);
         try {
             const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`);
@@ -249,12 +262,13 @@
                     html += `<div class="news-item"><a href="${data.items[i].link}" target="_blank">➔ ${data.items[i].title}</a></div>`;
                 }
             }
-            el.innerHTML = html || "Keine aktuellen Nachrichten.";
+            el.innerHTML = html || "Keine aktuellen Meldungen.";
         } catch(e) {
-            el.innerHTML = "News-Schnittstelle blockiert.";
+            el.innerHTML = "News-Stream temporär verzögert.";
         }
     }
 
+    // App-Start
     loadAssetData();
 </script>
 
