@@ -17,35 +17,46 @@
         .header h1 { font-size: 19px; font-weight: 800; color: #fbbf24; margin: 0 0 4px 0; }
         .header p { font-size: 11px; color: #94a3b8; margin: 0; }
         
-        /* Dropdown-Container für den künstlichen Pfeil */
-        .select-container { margin-bottom: 16px; position: relative; width: 100%; }
+        /* Neuer, bombenfester Dropdown-Container */
+        .select-container { 
+            margin-bottom: 16px; 
+            width: 100%; 
+            background-color: #1e293b; 
+            border: 1px solid #334155; 
+            border-radius: 10px;
+            display: table; /* Sichere Tabellen-Struktur für iOS-Rendering */
+            position: relative;
+        }
         
-        /* Der stilisierte Pfeil rechts im Menü */
-        .select-container::after {
-            content: "▼";
-            font-size: 10px;
-            color: #fbbf24; /* Passend zum Gold-Ton der Überschrift */
-            position: absolute;
-            right: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            pointer-events: none; /* Klicks gehen durch den Pfeil direkt aufs Select */
+        .select-cell {
+            display: table-cell;
+            vertical-align: middle;
         }
         
         .styled-select { 
             width: 100%; 
-            background-color: #1e293b; 
-            border: 1px solid #334155; 
+            background: transparent; 
+            border: none; 
             color: #f1f5f9; 
-            padding: 12px 40px 12px 16px; /* Rechts mehr Platz gelassen für den Pfeil */
-            border-radius: 10px; 
+            padding: 12px 0px 12px 16px; 
             font-size: 14px; 
             font-weight: bold; 
             outline: none; 
             cursor: pointer; 
-            -webkit-appearance: none; /* Entfernt die unschönen iOS-Standard-Pfeile */
-            appearance: none; 
-            text-align: left; /* Auf Linksbündig geändert, damit es professioneller mit dem Pfeil aussieht */
+            -webkit-appearance: none; 
+            appearance: none;
+            display: block;
+        }
+        
+        /* Fest installierter Pfeil-Bereich, der nicht vom Select überlappt wird */
+        .arrow-cell {
+            display: table-cell;
+            vertical-align: middle;
+            width: 40px;
+            text-align: center;
+            color: #fbbf24;
+            font-size: 10px;
+            pointer-events: none;
         }
         
         .price-box { background-color: #020617; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 16px; }
@@ -71,8 +82,11 @@
         </div>
 
         <div class="select-container">
-            <select class="styled-select" id="asset-select" onchange="selectTicker()">
-            </select>
+            <div class="select-cell">
+                <select class="styled-select" id="asset-select" onchange="selectTicker()">
+                </select>
+            </div>
+            <div class="arrow-cell">▼</div>
         </div>
 
         <div class="price-box">
