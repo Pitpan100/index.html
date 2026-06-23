@@ -10,8 +10,7 @@
         .card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; width: 100%; max-width: 380px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); overflow: hidden; }
         
         /* Extremwert-Ticker-Band */
-        .ticker-wrap { background: #020617; border: 1px solid #ef4444; border-radius: 8px; padding: 6px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; font-size: 11px; font-weight: bold; color: #f87171; display: none; }
-        /* JETZT AUF 70s ERHÖHT FÜR EIN EXTREM RUHIGES LAUFBAND */
+        .ticker-wrap { background: #020617; border: 1px solid #ef4444; border-radius: 8px; padding: 6px; margin-bottom: 16px; overflow: hidden; white-space: nowrap; font-size: 11px; font-weight: bold; color: #f87171; display: none; cursor: pointer; }
         .ticker { display: inline-block; animation: marquee 70s linear infinite; padding-left: 100%; }
         @keyframes marquee { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
@@ -35,7 +34,12 @@
 </head>
 <body>
     <div class="card">
-        <div class="ticker-wrap" id="alert-wrap">
+        <!-- Das Laufband pausiert nun bei Berührung (touchstart/mouseenter) und läuft danach weiter -->
+        <div class="ticker-wrap" id="alert-wrap" 
+             onmouseenter="document.getElementById('alert-ticker').style.animationPlayState='paused'" 
+             onmouseleave="document.getElementById('alert-ticker').style.animationPlayState='running'"
+             ontouchstart="document.getElementById('alert-ticker').style.animationPlayState='paused'"
+             ontouchend="document.getElementById('alert-ticker').style.animationPlayState='running'">
             <div class="ticker" id="alert-ticker">Scanne Märkte nach Extremwerten...</div>
         </div>
 
