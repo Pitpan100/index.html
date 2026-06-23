@@ -96,6 +96,7 @@
             display: flex;
             flex-direction: column;
             min-height: 0;
+            overflow: hidden;
         }
 
         .widget-box h3 {
@@ -190,13 +191,28 @@
 
         <div class="sidebar">
             <div class="widget-box">
-                <h3>Agrar-Wetter / Live</h3>
-                <iframe class="widget-content" src="https://blogs.unwetterzentrale.de/embed-map/" style="background: transparent;"></iframe>
+                <h3>Agrar-Wetter / Radar</h3>
+                <iframe class="widget-content" src="https://embed.windy.com/embed2.html?lat=40&lon=-95&detail=false&width=100%&height=100%&zoom=3&level=surface&overlay=radar&product=radar&menu=&message=false&marker=&calendar=now&pressure=&type=map&location=coordinates&metricWind=default&metricTemp=default" frameborder="0"></iframe>
             </div>
             
             <div class="widget-box">
                 <h3>Echtzeit Markt-News</h3>
-                <iframe class="widget-content" src="https://rss.app/embed/v1/ticker/tIasZ7XgYgZg6qAn" frameborder="0"></iframe>
+                <div class="widget-content" id="tv-news-container">
+                    <div class="tradingview-widget-container">
+                        <div class="tradingview-widget-container__widget"></div>
+                        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+                        {
+                          "feedMode": "all_symbols",
+                          "isTransparent": true,
+                          "displayMode": "regular",
+                          "width": "100%",
+                          "height": "100%",
+                          "colorTheme": "dark",
+                          "locale": "de"
+                        }
+                        </script>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -234,7 +250,7 @@
             if(symbol === "ZW=F") tvSymbol = "CBOT:ZW1!";
             if(symbol === "KC=F") tvSymbol = "ICEUS:KC1!";
             if(symbol === "CC=F") tvSymbol = "ICEUS:CC1!";
-            if(symbol === "LE=F") tvSymbol = "CME:LC1!"; // Korrigiert: Verhindert den AAPL-Fallback
+            if(symbol === "LE=F") tvSymbol = "CME:LE1!"; // Korrigiert auf das echte TradingView-Symbol
             if(symbol === "HO=F") tvSymbol = "NYMEX:HO1!";
 
             document.getElementById('tv-chart-wrapper').innerHTML = '<div id="tradingview_widget"></div>';
@@ -271,7 +287,6 @@
                 return;
             }
 
-            // 1. COT Score einfärben & glühen lassen
             const cotElem = document.getElementById('cot-score');
             cotElem.innerText = assetData.cot_score;
             if (assetData.cot_score.includes('Optimistisch')) {
@@ -285,7 +300,6 @@
                 cotElem.style.textShadow = 'none';
             }
 
-            // 2. Terminstruktur einfärben
             const termElem = document.getElementById('term-structure');
             termElem.innerText = assetData.term_structure;
             if (assetData.term_structure.includes('Backwardation')) {
@@ -296,7 +310,6 @@
                 termElem.style.textShadow = 'none';
             }
 
-            // 3. Netto-Positionierung einfärben
             const invElem = document.getElementById('inventories');
             invElem.innerText = assetData.inventories;
             if (assetData.inventories.includes('Net Long')) {
@@ -307,7 +320,6 @@
                 invElem.style.color = '#e2e8f0';
             }
 
-            // 4. Saisonalität einfärben
             const seaElem = document.getElementById('seasonality');
             seaElem.innerText = assetData.seasonality;
             if (assetData.seasonality.includes('Bullisch')) {
