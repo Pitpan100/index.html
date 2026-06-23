@@ -3,67 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Commodity Intelligence</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Commodity Hub</title>
     <style>
-        body { background: #0b0f19; color: #f3f4f6; font-family: -apple-system, sans-serif; margin: 0; padding: 16px; }
-        .card { background: #0f172a; border-radius: 16px; padding: 20px; border: 1px solid #1e293b; max-width: 400px; margin: auto; }
-        .price-display { font-size: 32px; font-weight: 900; color: #34d399; margin: 10px 0; }
-        #chartCanvas { width: 100%; height: 150px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; }
-        .news-box { font-size: 13px; color: #cbd5e1; margin-top: 15px; }
-        .data-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b; font-size: 14px; }
+        body { background: #0b0f19; color: #fff; font-family: sans-serif; margin: 0; padding: 15px; }
+        .card { background: #0f172a; border-radius: 15px; padding: 20px; border: 1px solid #1e293b; max-width: 400px; margin: auto; }
+        select { width: 100%; padding: 12px; background: #1e293b; color: white; border-radius: 8px; border: none; margin-bottom: 20px; }
+        #chartCanvas { width: 100%; height: 150px; background: #020617; border-radius: 8px; margin-bottom: 20px; display: block; }
+        .price { font-size: 28px; font-weight: bold; color: #34d399; margin-bottom: 10px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <select id="asset-select" onchange="updateData()" style="width:100%; padding:10px; background:#1e293b; color:white; border-radius:8px; border:none;"></select>
-        <div id="comm-price" class="price-display">Lade...</div>
+        <select id="ticker" onchange="loadData()">
+            <option value="GC=F">Gold</option>
+            <option value="SI=F">Silber</option>
+            <option value="CL=F">Rohöl</option>
+        </select>
+        <div id="price" class="price">Lädt...</div>
         <canvas id="chartCanvas"></canvas>
-        <div id="news-box" class="news-box"></div>
-        <div id="stats"></div>
     </div>
 
     <script>
-        const assets = { "GC=F": "Gold", "SI=F": "Silber", "CL=F": "Rohöl" };
-        
-        async function updateData() {
-            const ticker = document.getElementById('asset-select').value;
-            const priceEl = document.getElementById('comm-price');
-            
-            // Proxy für PWA-Modus (umgeht Apple-Blockade)
-            const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
+        async function loadData() {
+            const ticker = document.getElementById('ticker').value;
+            const priceEl = document.getElementById('price');
             
             try {
+                // Proxy verwenden, um CORS auf dem iPad zu umgehen
+                const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
                 const res = await fetch(url);
-                const json = await res.json();
-                const quote = json.chart.result[0].indicators.quote[0];
-                const price = json.chart.result[0].meta.regularMarketPrice;
+                const data = await res.json();
+                const quote = data.chart.result[0].indicators.quote[0].close;
+                const price = data.chart.result[0].meta.regularMarketPrice;
                 
                 priceEl.innerText = price.toFixed(2) + " USD";
-                drawChart(quote.close);
+                drawChart(quote);
             } catch(e) {
-                priceEl.innerText = "Fehler / Offline";
+                priceEl.innerText = "Fehler: " + e.message;
             }
         }
 
         function drawChart(data) {
             const canvas = document.getElementById('chartCanvas');
+            // Canvas-Größe fest setzen, damit iOS es rendert
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            const min = Math.min(...data.filter(n => n)), max = Math.max(...data.filter(n => n));
             ctx.strokeStyle = "#34d399";
             ctx.lineWidth = 2;
             ctx.beginPath();
-            const step = canvas.width / data.length;
             data.forEach((val, i) => {
-                const y = canvas.height - ((val - Math.min(...data)) / (Math.max(...data) - Math.min(...data)) * canvas.height);
-                i === 0 ? ctx.moveTo(i * step, y) : ctx.lineTo(i * step, y);
+                const x = (i / (data.length - 1)) * canvas.width;
+                const y = canvas.height - ((val - min) / (max - min)) * canvas.height;
+                i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
             });
             ctx.stroke();
         }
 
-        // Dropdown füllen
-        const sel = document.getElementById('asset-select');
-        for (let t in assets) sel.innerHTML += `<option value="${t}">${assets[t]}</option>`;
-        updateData();
+        loadData();
     </script>
 </body>
 </html>
