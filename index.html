@@ -14,6 +14,9 @@
         .ticker { display: inline-block; animation: marquee 70s linear infinite; padding-left: 100%; }
         @keyframes marquee { 0% { transform: translate3d(0, 0, 0); } 100% { transform: translate3d(-100%, 0, 0); } }
 
+        /* CSS-Klasse zum sicheren Stoppen via JS */
+        .paused { animation-play-state: paused !important; }
+
         .header { border-bottom: 1px solid #1e293b; padding-bottom: 12px; margin-bottom: 16px; text-align: center; }
         .header h1 { font-size: 19px; font-weight: 800; color: #fbbf24; margin: 0 0 4px 0; }
         .header p { font-size: 11px; color: #94a3b8; margin: 0; }
@@ -34,12 +37,11 @@
 </head>
 <body>
     <div class="card">
-        <!-- Das Laufband pausiert nun bei Berührung (touchstart/mouseenter) und läuft danach weiter -->
         <div class="ticker-wrap" id="alert-wrap" 
-             onmouseenter="document.getElementById('alert-ticker').style.animationPlayState='paused'" 
-             onmouseleave="document.getElementById('alert-ticker').style.animationPlayState='running'"
-             ontouchstart="document.getElementById('alert-ticker').style.animationPlayState='paused'"
-             ontouchend="document.getElementById('alert-ticker').style.animationPlayState='running'">
+             onmouseenter="document.getElementById('alert-ticker').classList.add('paused')" 
+             onmouseleave="document.getElementById('alert-ticker').classList.remove('paused')"
+             ontouchstart="document.getElementById('alert-ticker').classList.add('paused')"
+             ontouchend="document.getElementById('alert-ticker').classList.remove('paused')">
             <div class="ticker" id="alert-ticker">Scanne Märkte nach Extremwerten...</div>
         </div>
 
