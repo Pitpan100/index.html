@@ -13,8 +13,12 @@ ASSETS = {
     "HG=F": {"cftc_name": "COPPER - COMMODITY EXCHANGE INC.", "name": "Kupfer (Copper)"},
     "ZW=F": {"cftc_name": "WHEAT - CHICAGO BOARD OF TRADE", "name": "Weizen (Wheat)"},
     "ZC=F": {"cftc_name": "CORN - CHICAGO BOARD OF TRADE", "name": "Mais (Corn)"},
+    "ZS=F": {"cftc_name": "SOYBEANS - CHICAGO BOARD OF TRADE", "name": "Sojabohnen (Soybeans)"},
     "KC=F": {"cftc_name": "COFFEE C - ICE FUTURES U.S.", "name": "Kaffee (Coffee)"},
-    "CC=F": {"cftc_name": "COCOA - ICE FUTURES U.S.", "name": "Kakao (Cocoa)"}
+    "CC=F": {"cftc_name": "COCOA - ICE FUTURES U.S.", "name": "Kakao (Cocoa)"},
+    "LE=F": {"cftc_name": "LIVE CATTLE - CHICAGO MERCANTILE EXCHANGE", "name": "Lebendrind (Live Cattle)"},
+    "LBS=F": {"cftc_name": "LUMBER - CHICAGO MERCANTILE EXCHANGE", "name": "Holz (Lumber)"},
+    "HO=F": {"cftc_name": "HEATING OIL NO. 2 - NEW YORK MERCANTILE EXCHANGE", "name": "Heizöl (Heating Oil)"}
 }
 
 def get_live_term_structure(ticker):
@@ -25,8 +29,7 @@ def get_live_term_structure(ticker):
         price_front = data['chart']['result'][0]['meta']['regularMarketPrice']
         
         clean = ticker.replace('=F', '')
-        # Schwellenwerte für Backwardation angepasst (inklusive 2026er Silber/Kupfer Levels)
-        thresholds = {"CC": 7000, "KC": 200, "CL": 78, "NG": 2.40, "GC": 4100, "SI": 64.00, "HG": 6.20}
+        thresholds = {"CC": 7000, "KC": 200, "CL": 78, "NG": 2.40, "GC": 4100, "SI": 64.00, "HG": 6.20, "ZS": 1100, "LE": 180, "LBS": 450, "HO": 2.20}
         
         if clean in thresholds and price_front > thresholds[clean]:
             return "Backwardation"
@@ -56,6 +59,12 @@ def main():
 
     output_data = {}
     
+    seasonality_map = {
+        "CL=F": "Bullisch", "NG=F": "Neutral", "GC=F": "Bärisch", "SI=F": "Bärisch", "HG=F": "Bullisch",
+        "ZW=F": "Bärisch", "ZC=F": "Bärisch", "ZS=F": "Neutral", "KC=F": "Bullisch", "CC=F": "Neutral",
+        "LE=F": "Bullisch", "LBS=F": "Neutral", "HO=F": "Bullisch"
+    }
+
     for ticker, info in ASSETS.items():
         cftc_name = info["cftc_name"]
         asset_df = df[df['Market_and_Exchange_Names'].str.contains(cftc_name, case=False, na=False)].copy()
@@ -74,13 +83,6 @@ def main():
         min_pos = asset_df['Net_Comm'].min()
         
         cot_score = int(((net_position - min_pos) / (max_pos - min_pos)) * 100) if max_pos != min_pos else 50
-            
-        # Saisonalitäts-Matrix
-        seasonality_map = {
-            "CL=F": "Bullisch", "NG=F": "Neutral", "GC=F": "Bärisch", 
-            "SI=F": "Bärisch", "HG=F": "Bullisch",
-            "ZW=F": "Bärisch", "ZC=F": "Bärisch", "KC=F": "Bullisch", "CC=F": "Neutral"
-        }
         
         output_data[ticker] = {
             "name": info["name"],
@@ -91,7 +93,7 @@ def main():
         }
 
     if not os.path.exists("index.html"):
-        print("index.html nicht gefunden. Skript bricht ab.")
+        print("index.html nicht gefunden.")
         return
 
     with open("index.html", "r", encoding="utf-8") as f:
