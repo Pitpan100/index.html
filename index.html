@@ -2,275 +2,357 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Commodity Intelligence Terminal</title>
     <style>
-        body { background: #050505; color: #fff; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 10px; -webkit-font-smoothing: antialiased; }
-        .container { max-width: 460px; margin: auto; background: #0d0d0d; border: 1px solid #1a1a1a; border-radius: 12px; padding: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.7); }
-        select { width: 100%; padding: 12px; background: #161616; color: #fff; border: 1px solid #2a2a2a; border-radius: 8px; font-weight: bold; font-size: 14px; margin-bottom: 12px; -webkit-appearance: none; outline: none; cursor: pointer; }
-        .price-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; padding: 0 4px; }
-        .price-title { font-size: 18px; font-weight: bold; letter-spacing: -0.5px; }
-        .price-val { font-size: 18px; font-weight: bold; color: #00ff66; font-family: monospace; }
-        #canvasContainer { width: 100%; background: #000; border-radius: 8px; border: 1px solid #1a1a1a; margin-bottom: 12px; }
-        canvas { display: block; width: 100%; height: 230px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .box { background: #121212; padding: 10px; border-radius: 6px; border: 1px solid #1c1c1c; min-height: 42px; }
-        .label { font-size: 8px; color: #666; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
-        .val { font-size: 11px; font-weight: bold; color: #fff; margin-top: 4px; line-height: 1.2; }
-        .val.green { color: #00ff66; }
-        .news-panel { background: #121212; padding: 10px; border-radius: 6px; border: 1px solid #1c1c1c; }
-        .news-title { font-size: 9px; color: #666; text-transform: uppercase; font-weight: bold; margin-bottom: 6px; }
-        .news-item { font-size: 11px; margin-bottom: 6px; line-height: 1.35; border-bottom: 1px solid #1a1a1a; padding-bottom: 5px; }
-        .news-item:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
-        .news-item a { color: #38bdf8; text-decoration: none; }
-        .news-item a:hover { text-decoration: underline; }
+        :root {
+            --bg-color: #0c0f16;
+            --card-bg: #161a25;
+            --text-main: #e2e8f0;
+            --text-muted: #64748b;
+            --border-color: #242936;
+            --accent-blue: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Top Navigation / Asset Selector */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .logo-area h1 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            color: #fff;
+        }
+
+        .logo-area span {
+            color: var(--accent-blue);
+        }
+
+        .asset-selector {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            outline: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* Main Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 3fr 1fr;
+            grid-template-rows: 1fr auto;
+            gap: 15px;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* Left Side: Main Chart Container */
+        .chart-container {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Right Side: Sidebar for Widgets (Weather & News) */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 0;
+        }
+
+        .widget-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .widget-box h3 {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .widget-content {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 4px;
+        }
+
+        /* Bottom Metrics Row */
+        .metrics-row {
+            grid-column: span 2;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            padding-top: 5px;
+        }
+
+        .metric-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+
+        /* Responsive overrides for smaller iPads */
+        @media (max-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                grid-template-rows: 2fr 1fr auto;
+            }
+            .sidebar {
+                flex-direction: row;
+            }
+            .metrics-row {
+                grid-column: span 1;
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
     </style>
+    <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 </head>
 <body>
 
-<div class="container">
-    <!-- Value-Zweige matchen exakt 1:1 die Keys deiner update_cot.py Python-Logik -->
-    <select id="sel" onchange="loadAssetData()">
-        <option value="GC=F" data-name="Gold" data-lat="40.81" data-lon="-115.76">Gold (Nevada Minen-Hub)</option>
-        <option value="CL=F" data-name="Crude Oil" data-lat="35.98" data-lon="-96.77">Rohöl WTI (Cushing Hub)</option>
-        <option value="SI=F" data-name="Silver" data-lat="23.17" data-lon="-102.86">Silber (Zacatecas Region)</option>
-        <option value="HG=F" data-name="Copper" data-lat="-24.27" data-lon="-69.07">Kupfer (Escondida Mine)</option>
-        <option value="NG=F" data-name="Natural Gas" data-lat="29.99" data-lon="-92.03">Erdgas (Henry Hub)</option>
-        <option value="ZS=F" data-name="Soybeans" data-lat="41.59" data-lon="-93.60">Sojabohnen (Iowa Belt)</option>
-        <option value="ZC=F" data-name="Corn" data-lat="40.00" data-lon="-89.00">Mais (Illinois Farming Hub)</option>
-        <option value="ZW=F" data-name="Wheat" data-lat="38.84" data-lon="-97.61">Weizen (Kansas Crop Region)</option>
-        <option value="KC=F" data-name="Coffee" data-lat="-21.60" data-lon="-45.50">Kaffee (Sul de Minas)</option>
-        <option value="CC=F" data-name="Cocoa" data-lat="6.82" data-lon="-5.28">Kakao (Elfenbeinküste Hub)</option>
-        <option value="LE=F" data-name="Live Cattle" data-lat="35.22" data-lon="-101.83">Lebendrind (Amarillo Yards)</option>
-        <option value="LBS=F" data-name="Lumber" data-lat="53.91" data-lon="-122.74">Holz (British Columbia)</option>
-        <option value="HO=F" data-name="Heating Oil" data-lat="40.63" data-lon="-74.24">Heizöl (New York Harbor)</option>
-    </select>
+    <header>
+        <div class="logo-area">
+            <h1>COMMODITY<span>.INTELLIGENCE</span></h1>
+        </div>
+        <select id="asset-picker" class="asset-selector" onchange="changeAsset(this.value)">
+            <option value="GC=F">Gold (GC=F)</option>
+            <option value="SI=F">Silber (SI=F)</option>
+            <option value="CL=F">Rohöl WTI (CL=F)</option>
+            <option value="HG=F">Kupfer (HG=F)</option>
+            <option value="NG=F">Erdgas (NG=F)</option>
+            <option value="ZS=F">Sojabohnen (ZS=F)</option>
+            <option value="ZC=F">Mais (ZC=F)</option>
+            <option value="ZW=F">Weizen (ZW=F)</option>
+            <option value="KC=F">Kaffee (KC=F)</option>
+            <option value="CC=F">Kakao (CC=F)</option>
+            <option value="LE=F">Lebendrind (LE=F)</option>
+            <option value="HO=F">Heizöl (HO=F)</option>
+        </select>
+    </header>
 
-    <div class="price-bar">
-        <div class="price-title" id="assetTitle">Gold</div>
-        <div class="price-val" id="livePrice">--</div>
-    </div>
+    <div class="dashboard-grid">
+        <div class="chart-container" id="tv-chart-wrapper">
+            </div>
 
-    <div id="canvasContainer">
-        <canvas id="chartCanvas" width="432" height="230"></canvas>
-    </div>
-
-    <div class="grid">
-        <div class="box"><div class="label">COT Score</div><div class="val green" id="cot">Messe...</div></div>
-        <div class="box"><div class="label">Terminkurve</div><div class="val" id="term">Berechne...</div></div>
-        <div class="box"><div class="label">Lagerbestand / Net-Pos.</div><div class="val" id="inv">Analysiere...</div></div>
-        <div class="box"><div class="label">Saisonalität</div><div class="val" id="sea">Prüfe...</div></div>
-        <div class="box"><div class="label">Realtime Wetter (Asset-Hub)</div><div class="val" id="weather">Frage ab...</div></div>
-    </div>
-
-    <div class="news-panel">
-        <div class="news-title">Top 3 Realtime News</div>
-        <div id="news">Lade News-Stream...</div>
-    </div>
-</div>
-
-<script>
-    // 100% Autarker HTML5-Canvas Chart-Engine für Kerzen + Volumenprofil
-    function drawVolumeProfileAndChart(candles) {
-        const canvas = document.getElementById('chartCanvas');
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        if(!candles || candles.length === 0) return;
-        
-        const lows = candles.map(c => c.low).filter(v => v != null);
-        const highs = candles.map(c => c.high).filter(v => v != null);
-        const minPrice = Math.min(...lows);
-        const maxPrice = Math.max(...highs);
-        const priceRange = maxPrice - minPrice || 1;
-        
-        const chartPaddingTop = 15;
-        const chartPaddingBottom = 40; 
-        const usableHeight = canvas.height - chartPaddingTop - chartPaddingBottom;
-        
-        // Volumenprofil (VPVR) mathematisch Clustern (24 Preis-Zonen)
-        const numBins = 24;
-        const bins = Array(numBins).fill(0);
-        const binSize = priceRange / numBins;
-        
-        candles.forEach(c => {
-            if(!c.volume || c.low == null || c.high == null) return;
-            let startBin = Math.floor((c.low - minPrice) / binSize);
-            let endBin = Math.floor((c.high - minPrice) / binSize);
-            startBin = Math.max(0, Math.min(startBin, numBins - 1));
-            endBin = Math.max(0, Math.min(endBin, numBins - 1));
+        <div class="sidebar">
+            <div class="widget-box">
+                <h3>Agrar-Wetter / Live</h3>
+                <iframe class="widget-content" src="https://blogs.unwetterzentrale.de/embed-map/" style="background: transparent;"></iframe>
+            </div>
             
-            const intersectCount = (endBin - startBin) + 1;
-            const allocatedVol = c.volume / intersectCount;
-            for(let b = startBin; b <= endBin; b++) { bins[b] += allocatedVol; }
-        });
-        
-        // Point of Control (POC) lokalisieren
-        let maxBinVol = 0, pocBinIndex = 0;
-        for(let b = 0; b < numBins; b++) {
-            if(bins[b] > maxBinVol) { maxBinVol = bins[b]; pocBinIndex = b; }
-        }
-        
-        // Value Area (70% Volumenkorridor um den POC) kalkulieren
-        const totalVol = bins.reduce((a, b) => a + b, 0);
-        const targetVol = totalVol * 0.70;
-        let vaVol = bins[pocBinIndex];
-        let minVaBin = pocBinIndex, maxVaBin = pocBinIndex;
-        
-        while(vaVol < targetVol) {
-            let upVol = (maxVaBin + 1 < numBins) ? bins[maxVaBin + 1] : -1;
-            let downVol = (minVaBin - 1 >= 0) ? bins[minVaBin - 1] : -1;
-            if(upVol === -1 && downVol === -1) break;
-            if(upVol >= downVol) { maxVaBin++; vaVol += upVol; } 
-            else { minVaBin--; vaVol += downVol; }
-        }
-        
-        // Shading der Value Area zeichnen
-        const yVAH = chartPaddingTop + usableHeight * (1 - ((minPrice + (maxVaBin + 1) * binSize) - minPrice) / priceRange);
-        const yVAL = chartPaddingTop + usableHeight * (1 - ((minPrice + minVaBin * binSize) - minPrice) / priceRange);
-        ctx.fillStyle = 'rgba(56, 189, 248, 0.04)';
-        ctx.fillRect(0, yVAH, canvas.width, yVAL - yVAH);
-        
-        // Horizontale Volumenbalken des Profils rendern
-        for(let b = 0; b < numBins; b++) {
-            const binVol = bins[b];
-            const barWidth = (binVol / maxBinVol) * 110; 
-            const yTop = chartPaddingTop + usableHeight * (1 - ((b + 1) * binSize) / priceRange);
-            const barHeight = (chartPaddingTop + usableHeight * (1 - (b * binSize) / priceRange)) - yTop;
-            
-            const isInValueArea = (b >= minVaBin && b <= maxVaBin);
-            ctx.fillStyle = isInValueArea ? 'rgba(56, 189, 248, 0.20)' : 'rgba(255, 255, 255, 0.05)';
-            ctx.fillRect(canvas.width - barWidth, yTop + 0.5, barWidth, barHeight - 0.5);
-        }
-        
-        // Rote Point of Control (POC) Linie generieren
-        const yPOC = chartPaddingTop + usableHeight * (1 - ((minPrice + (pocBinIndex + 0.5) * binSize) - minPrice) / priceRange);
-        ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
-        ctx.beginPath(); ctx.moveTo(0, yPOC); ctx.lineTo(canvas.width, yPOC); ctx.stroke(); ctx.setLineDash([]);
-        
-        // Markierungen setzen
-        ctx.fillStyle = '#555'; ctx.font = '9px monospace';
-        ctx.fillText("VAH", 4, yVAH - 3); ctx.fillText("VAL", 4, yVAL + 10);
-        ctx.fillStyle = '#ef4444'; ctx.fillText("POC", 4, yPOC - 3);
+            <div class="widget-box">
+                <h3>Echtzeit Markt-News</h3>
+                <iframe class="widget-content" src="https://rss.app/embed/v1/ticker/tIasZ7XgYgZg6qAn" frameborder="0"></iframe>
+            </div>
+        </div>
 
-        // Vertikale klassische Volumenbalken am Boden rendern
-        const maxDailyVol = Math.max(...candles.map(c => c.volume || 0));
-        const candleWidth = (canvas.width / candles.length) - 1.5;
-        
-        candles.forEach((c, i) => {
-            const x = i * (canvas.width / candles.length) + 0.5;
-            const isBullish = c.close >= c.open;
+        <div class="metrics-row">
+            <div class="metric-card">
+                <div class="metric-label">COT Sentiment Score</div>
+                <div class="metric-value" id="cot-score">Lade...</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Terminstruktur</div>
+                <div class="metric-value" id="term-structure">Lade...</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Netto-Positionierung</div>
+                <div class="metric-value" id="inventories">Lade...</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Saisonaler Trend</div>
+                <div class="metric-value" id="seasonality">Lade...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let globalData = {};
+
+        // Initalisiert den TradingView Chart dynamisch
+        function initTradingView(symbol) {
+            // Mapping für saubere TradingView-Ticker-Symbole
+            let tvSymbol = "COMEX:GC1!";
+            if(symbol === "CL=F") tvSymbol = "NYMEX:CL1!";
+            if(symbol === "SI=F") tvSymbol = "COMEX:SI1!";
+            if(symbol === "HG=F") tvSymbol = "COMEX:HG1!";
+            if(symbol === "NG=F") tvSymbol = "NYMEX:NG1!";
+            if(symbol === "ZS=F") tvSymbol = "CBOT:ZS1!";
+            if(symbol === "ZC=F") tvSymbol = "CBOT:ZC1!";
+            if(symbol === "ZW=F") tvSymbol = "CBOT:ZW1!";
+            if(symbol === "KC=F") tvSymbol = "ICEUS:KC1!";
+            if(symbol === "CC=F") tvSymbol = "ICEUS:CC1!";
+            if(symbol === "LE=F") tvSymbol = "CME:LE1!";
+            if(symbol === "HO=F") tvSymbol = "NYMEX:HO1!";
+
+            document.getElementById('tv-chart-wrapper').innerHTML = '<div id="tradingview_widget"></div>';
             
-            if (c.volume) {
-                const volBarHeight = (c.volume / maxDailyVol) * 26;
-                ctx.fillStyle = isBullish ? 'rgba(0, 255, 102, 0.15)' : 'rgba(255, 51, 85, 0.15)';
-                ctx.fillRect(x, canvas.height - volBarHeight - 5, candleWidth, volBarHeight);
+            new TradingView.widget({
+                "autosize": true,
+                "symbol": tvSymbol,
+                "interval": "D",
+                "timezone": "Europe/Berlin",
+                "theme": "dark",
+                "style": "1",
+                "locale": "de",
+                "toolbar_bg": "#161a25",
+                "enable_publishing": false,
+                "hide_side_toolbar": false,
+                "allow_symbol_change": true,
+                "details": true,
+                "studies": [
+                    "Volume@tv-basicstudies",
+                    "VPVolumeProfile@tv-basicstudies"
+                ],
+                "container_id": "tv-chart-wrapper"
+            });
+        }
+
+        // Aktualisiert die Anzeige und wendet die intelligente Einfärbung an
+        function updateMetrics(ticker) {
+            const assetData = globalData[ticker];
+            
+            if (!assetData) {
+                document.getElementById('cot-score').innerText = "N/A";
+                document.getElementById('term-structure').innerText = "N/A";
+                document.getElementById('inventories').innerText = "N/A";
+                document.getElementById('seasonality').innerText = "N/A";
+                return;
             }
-            
-            // Preis-Kerzen (O, H, L, C) zeichnen
-            const yHigh = chartPaddingTop + usableHeight * (1 - (c.high - minPrice) / priceRange);
-            const yLow = chartPaddingTop + usableHeight * (1 - (c.low - minPrice) / priceRange);
-            const yOpen = chartPaddingTop + usableHeight * (1 - (c.open - minPrice) / priceRange);
-            const yClose = chartPaddingTop + usableHeight * (1 - (c.close - minPrice) / priceRange);
-            
-            ctx.strokeStyle = isBullish ? '#00ff66' : '#ff3355';
-            ctx.fillStyle = isBullish ? '#00ff66' : '#ff3355';
-            
-            ctx.beginPath(); ctx.moveTo(x + candleWidth/2, yHigh); ctx.lineTo(x + candleWidth/2, yLow); ctx.stroke();
-            const bodyHeight = Math.max(Math.abs(yClose - yOpen), 1);
-            ctx.fillRect(x, Math.min(yOpen, yClose), candleWidth, bodyHeight);
-        });
-    }
 
-    async function loadAssetData() {
-        const select = document.getElementById('sel');
-        const ticker = select.value;
-        const selectedOption = select.options[select.selectedIndex];
-        document.getElementById('assetTitle').innerText = selectedOption.text.split(' (')[0];
-        
-        try { fetchRealtimePriceAndOrderflow(ticker); } catch(e) {}
-        try { fetchBackendData(ticker); } catch(e) {}
-        try { fetchLiveWeather(selectedOption.dataset.lat, selectedOption.dataset.lon); } catch(e) {}
-        try { fetchLiveNews(selectedOption.dataset.name); } catch(e) {}
-    }
-
-    // Live- & Historiendaten via Yahoo Finance API Proxy
-    async function fetchRealtimePriceAndOrderflow(ticker) {
-        const url = `https://corsproxy.io/?https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
-        const res = await fetch(url);
-        const data = await res.json();
-        const quotes = data.chart.result[0].indicators.quote[0];
-        const timestamps = data.chart.result[0].timestamp;
-        const meta = data.chart.result[0].meta;
-        
-        document.getElementById('livePrice').innerText = meta.regularMarketPrice ? meta.regularMarketPrice.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) : "--";
-
-        const candleData = timestamps.map((t, i) => ({
-            open: quotes.open[i], high: quotes.high[i], low: quotes.low[i], close: quotes.close[i], volume: quotes.volume[i]
-        })).filter(c => c.open != null && c.close != null);
-        
-        drawVolumeProfileAndChart(candleData);
-    }
-
-    // Bindung an deine automatisierte data.json von GitHub Actions (mit Cache-Busting)
-    async function fetchBackendData(ticker) {
-        const url = `./data.json?t=${new Date().getTime()}`;
-        try {
-            const res = await fetch(url);
-            if(!res.ok) throw new Error(`${res.status}: Datei fehlt`);
-            
-            const backend = await res.json();
-            const assetData = backend[ticker];
-            if (assetData) {
-                document.getElementById('cot').innerText = assetData.cot_score || assetData.cot || "N/A";
-                document.getElementById('term').innerText = assetData.term_structure || assetData.kurve || "N/A";
-                document.getElementById('inv').innerText = assetData.inventories || assetData.position || "N/A";
-                document.getElementById('sea').innerText = assetData.seasonality || assetData.saisonalitaet || "Neutral";
+            // 1. COT Score einfärben
+            const cotElem = document.getElementById('cot-score');
+            cotElem.innerText = assetData.cot_score;
+            if (assetData.cot_score.includes('Optimistisch')) {
+                cotElem.style.color = '#22c55e';
+                cotElem.style.textShadow = '0 0 10px rgba(34, 197, 94, 0.4)';
+            } else if (assetData.cot_score.includes('Bärisch')) {
+                cotElem.style.color = '#ef4444';
+                cotElem.style.textShadow = '0 0 10px rgba(239, 68, 68, 0.4)';
             } else {
-                showErrorInFields("Datenfehler");
+                cotElem.style.color = '#e2e8f0';
+                cotElem.style.textShadow = 'none';
             }
-        } catch (e) {
-            showErrorInFields(e.message.includes("404") ? "Warte auf JSON..." : "Update läuft...");
-        }
-    }
 
-    function showErrorInFields(msg) {
-        document.getElementById('cot').innerText = msg;
-        document.getElementById('term').innerText = msg;
-        document.getElementById('inv').innerText = msg;
-        document.getElementById('sea').innerText = msg;
-    }
-
-    // Geografisches Wetter der physischen Hauptumschlagplätze via Open-Meteo API
-    async function fetchLiveWeather(lat, lon) {
-        const el = document.getElementById('weather');
-        const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
-        const data = await res.json();
-        el.innerText = `${data.current_weather.temperature}°C | Wind: ${data.current_weather.windspeed} km/h`;
-    }
-
-    // Realtime News über bereinigten Google News Feed
-    async function fetchLiveNews(assetName) {
-        const el = document.getElementById('news');
-        const cleanName = assetName.split(' ')[0]; // Entfernt Ortszusätze aus der Suche
-        const feedUrl = encodeURIComponent(`https://news.google.com/rss/search?q=${cleanName}+commodity+market&hl=de&gl=DE&ceid=DE:de`);
-        try {
-            const res = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${feedUrl}`);
-            const data = await res.json();
-            let html = '';
-            if(data.items && data.items.length > 0) {
-                for (let i = 0; i < Math.min(3, data.items.length); i++) {
-                    html += `<div class="news-item"><a href="${data.items[i].link}" target="_blank">➔ ${data.items[i].title}</a></div>`;
-                }
+            // 2. Terminstruktur einfärben
+            const termElem = document.getElementById('term-structure');
+            termElem.innerText = assetData.term_structure;
+            if (assetData.term_structure.includes('Backwardation')) {
+                termElem.style.color = '#3b82f6';
+                termElem.style.textShadow = '0 0 10px rgba(59, 130, 246, 0.4)';
+            } else {
+                termElem.style.color = '#e2e8f0';
+                termElem.style.textShadow = 'none';
             }
-            el.innerHTML = html || "Keine aktuellen Meldungen.";
-        } catch(e) {
-            el.innerHTML = "News-Stream temporär verzögert.";
+
+            // 3. Netto-Positionierung einfärben
+            const invElem = document.getElementById('inventories');
+            invElem.innerText = assetData.inventories;
+            if (assetData.inventories.includes('Net Long')) {
+                invElem.style.color = '#10b981';
+            } else if (assetData.inventories.includes('Net Short')) {
+                invElem.style.color = '#f59e0b';
+            } else {
+                invElem.style.color = '#e2e8f0';
+            }
+
+            // 4. Saisonalität einfärben
+            const seaElem = document.getElementById('seasonality');
+            seaElem.innerText = assetData.seasonality;
+            if (assetData.seasonality.includes('Bullisch')) {
+                seaElem.style.color = '#22c55e';
+            } else if (assetData.seasonality.includes('Bärisch')) {
+                seaElem.style.color = '#ef4444';
+            } else {
+                seaElem.style.color = '#e2e8f0';
+            }
         }
-    }
 
-    // App-Start
-    loadAssetData();
-</script>
+        // Wird aufgerufen, wenn der Benutzer ein anderes Asset wählt
+        function changeAsset(ticker) {
+            initTradingView(ticker);
+            updateMetrics(ticker);
+        }
 
+        // Initialer Datenabruf beim Laden der Seite
+        async function loadDashboardData() {
+            try {
+                // Holt die von GitHub Actions generierte JSON-Datenbank
+                const response = await fetch('data.json?cache_buster=' + Date.now());
+                globalData = await response.json();
+                
+                // Starte standardmäßig mit Gold
+                const defaultAsset = document.getElementById('asset-picker').value;
+                changeAsset(defaultAsset);
+            } catch (error) {
+                console.error("Fehler beim Laden der JSON-Daten:", error);
+                document.querySelectorAll('.metric-value').forEach(el => el.innerText = "Fehler (JSON fehlt)");
+            }
+        }
+
+        // Starten
+        window.onload = loadDashboardData;
+    </script>
 </body>
 </html>
