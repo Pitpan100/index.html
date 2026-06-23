@@ -3,90 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <title>Commodity Hub Pro</title>
+    <title>Commodity Intelligence</title>
     <style>
-        body { background: #0b0f19; color: #e2e8f0; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
+        body { background: #0b0f19; color: #e2e8f0; font-family: sans-serif; margin: 0; padding: 10px; }
         .card { max-width: 450px; margin: auto; background: #0f172a; border-radius: 16px; padding: 16px; border: 1px solid #1e293b; }
         select { width: 100%; padding: 12px; background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 8px; font-weight: 600; margin-bottom: 15px; }
-        .price-box { font-size: 32px; font-weight: 800; color: #10b981; text-align: center; margin-bottom: 5px; }
-        canvas { width: 100%; height: 200px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; display: block; }
-        .news-box { margin-top: 15px; font-size: 13px; color: #cbd5e1; border-top: 1px solid #1e293b; padding-top: 10px; line-height: 1.4; height: 3.8em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; }
-        .data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .stat-box { background: #1e293b; padding: 8px; border-radius: 8px; text-align: center; }
-        .stat-label { font-size: 9px; text-transform: uppercase; color: #94a3b8; }
-        .stat-value { font-size: 13px; font-weight: bold; color: #f1f5f9; margin-top: 2px; }
+        .price-box { font-size: 28px; font-weight: 800; color: #10b981; text-align: center; margin-bottom: 10px; }
+        canvas { width: 100%; height: 180px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; }
+        .news-box { margin-top: 15px; font-size: 13px; color: #94a3b8; border-top: 1px solid #1e293b; padding-top: 10px; line-height: 1.4; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .box { background: #1e293b; padding: 8px; border-radius: 6px; text-align: center; }
+        .label { font-size: 9px; color: #64748b; text-transform: uppercase; }
+        .val { font-size: 13px; font-weight: bold; color: #f1f5f9; }
     </style>
 </head>
 <body>
     <div class="card">
-        <select id="asset-select" onchange="updateDashboard()"></select>
+        <select id="asset-select" onchange="update()"></select>
         <div class="price-box" id="price">-- USD</div>
         <canvas id="chartCanvas"></canvas>
-        <div class="news-box" id="news">📰 Lade Nachrichten...</div>
-        <div class="data-grid">
-            <div class="stat-box"><div class="stat-label">COT Score</div><div class="stat-value" id="cot">--</div></div>
-            <div class="stat-box"><div class="stat-label">Position</div><div class="stat-value" id="pos">--</div></div>
-            <div class="stat-box"><div class="stat-label">Saisonalität</div><div class="stat-value" id="season">--</div></div>
-            <div class="stat-box"><div class="stat-label">Kurve</div><div class="stat-value" id="struct">--</div></div>
+        <div class="news-box" id="news">📰 Wird geladen...</div>
+        <div class="grid">
+            <div class="box"><div class="label">COT Score</div><div class="val" id="cot">--</div></div>
+            <div class="box"><div class="label">Position</div><div class="val" id="pos">--</div></div>
+            <div class="box"><div class="label">Saisonalität</div><div class="val" id="sea">--</div></div>
+            <div class="box"><div class="label">Kurve</div><div class="val" id="str">--</div></div>
         </div>
     </div>
 
     <script>
-        const assets = {
-            "CL=F": { name: "Rohöl", cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "1. OPEC+ plant Förderkürzungen zur Preisstützung. 2. US-Lagerbestände sinken überraschend stark. 3. Geopolitische Spannungen treiben Risikoaufschläge nach oben." },
-            "GC=F": { name: "Gold", cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "1. Zentralbank-Goldkäufe setzen weltweit neue Rekorde. 2. US-Zinsentscheidung beeinflusst Goldpreis negativ. 3. Physische Nachfrage in Asien bleibt weiterhin sehr robust." },
-            // Ergänze hier beliebig weitere Assets nach diesem Schema
+        const dataMap = {
+            "CL=F": { n: "Rohöl", cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "OPEC+ signalisiert Kürzungen. Märkte bleiben angespannt. Lagerbestände sinken." },
+            "GC=F": { n: "Gold", cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Zentralbank-Käufe auf Rekordniveau. Zinsumfeld drückt auf Preis. Physische Nachfrage in Asien stabil." },
+            "SI=F": { n: "Silber", cot: "38/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Industrie-Nachfrage wächst massiv. Solar-Sektor treibt Defizit. Silber folgt Gold-Trend." },
+            "NG=F": { n: "Erdgas", cot: "76/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "Hitzewellen erhöhen AC-Bedarf. Lagerbestände im Normalbereich. Export-Nachfrage bleibt bestehen." },
+            "HG=F": { n: "Kupfer", cot: "68/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "Minen-Engpässe verknappen Angebot. Fokus auf China-Wachstum. Bestandssituation bleibt kritisch." },
+            "ZW=F": { n: "Weizen", cot: "49/100", pos: "Neutral", sea: "Bärisch", str: "Contango", news: "Ernteausfälle in Russland belasten. Wettermodelle zeigen Trockenheit. Preiskonsolidierung möglich." },
+            "ZC=F": { n: "Mais", cot: "51/100", pos: "Neutral", sea: "Bärisch", str: "Contango", news: "Anbauflächen stabil. Erträge über Erwartungen. Futter-Nachfrage leicht rückläufig." },
+            "ZS=F": { n: "Sojabohnen", cot: "72/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "Export-Aufträge stark. US-Wetter beeinflusst Ernte. Markt reagiert volatil." },
+            "KC=F": { n: "Kaffee", cot: "73/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "Brasilien-Ernte unter Druck. Globales Defizit erwartet. Preise auf Jahreshoch." },
+            "CC=F": { n: "Kakao", cot: "36/100", pos: "Net-Short", sea: "Neutral", str: "Backwardation", news: "Wetterkapriolen in Westafrika. Lieferketten unter Druck. Historisch hohe Preise." }
         };
 
         const sel = document.getElementById('asset-select');
-        Object.keys(assets).forEach(key => {
-            let opt = document.createElement('option');
-            opt.value = key;
-            opt.textContent = assets[key].name;
-            sel.appendChild(opt);
-        });
+        Object.keys(dataMap).forEach(k => sel.innerHTML += `<option value="${k}">${dataMap[k].n}</option>`);
 
-        async function updateDashboard() {
-            const ticker = sel.value;
-            const meta = assets[ticker];
-            document.getElementById('cot').innerText = meta.cot;
-            document.getElementById('pos').innerText = meta.pos;
-            document.getElementById('season').innerText = meta.sea;
-            document.getElementById('struct').innerText = meta.str;
-            document.getElementById('news').innerText = "📰 " + meta.news;
+        async function update() {
+            const t = sel.value, m = dataMap[t];
+            document.getElementById('cot').innerText = m.cot;
+            document.getElementById('pos').innerText = m.pos;
+            document.getElementById('sea').innerText = m.sea;
+            document.getElementById('str').innerText = m.str;
+            document.getElementById('news').innerText = "📰 " + m.news;
             
-            const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
             try {
-                const res = await fetch(url);
-                const data = await res.json();
-                const q = data.chart.result[0].indicators.quote[0];
-                document.getElementById('price').innerText = data.chart.result[0].meta.regularMarketPrice.toFixed(2) + " USD";
-                drawChart(q.close, q.volume);
-            } catch(e) { document.getElementById('price').innerText = "Datenfehler"; }
+                const res = await fetch(`https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${t}?range=1mo&interval=1d`);
+                const j = await res.json();
+                const q = j.chart.result[0].indicators.quote[0];
+                document.getElementById('price').innerText = j.chart.result[0].meta.regularMarketPrice.toFixed(2) + " USD";
+                draw(q.close, q.volume);
+            } catch(e) { document.getElementById('price').innerText = "Fehler"; }
         }
 
-        function drawChart(close, vol) {
-            const canvas = document.getElementById('chartCanvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const min = Math.min(...close.filter(n=>n)), max = Math.max(...close.filter(n=>n));
-            const volMax = Math.max(...vol.filter(n=>n));
-
-            close.forEach((v, i) => {
-                const x = (i / (close.length - 1)) * canvas.width;
-                // Preis-Balken
-                ctx.fillStyle = "#10b981";
-                ctx.fillRect(x - 2, canvas.height - ((v - min) / (max - min) * canvas.height * 0.7) - 40, 4, 4);
-                // Volumen-Balken (unten)
-                ctx.fillStyle = "#1e293b";
-                const vHeight = (vol[i] / volMax) * 30;
-                ctx.fillRect(x - 2, canvas.height - vHeight, 4, vHeight);
+        function draw(c, v) {
+            const ctx = document.getElementById('chartCanvas').getContext('2d');
+            ctx.canvas.width = ctx.canvas.offsetWidth; ctx.canvas.height = ctx.canvas.offsetHeight;
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            const min = Math.min(...c.filter(n=>n)), max = Math.max(...c.filter(n=>n)), vMax = Math.max(...v.filter(n=>n));
+            c.forEach((val, i) => {
+                const x = (i / (c.length - 1)) * ctx.canvas.width;
+                ctx.fillStyle = "#1e293b"; // Volumen
+                ctx.fillRect(x - 2, ctx.canvas.height - (v[i]/vMax * 40), 4, v[i]/vMax * 40);
+                ctx.fillStyle = "#10b981"; // Preis
+                ctx.fillRect(x - 2, ctx.canvas.height - ((val - min) / (max - min) * 120 + 40), 4, 4);
             });
         }
-        updateDashboard();
+        update();
     </script>
 </body>
 </html>
