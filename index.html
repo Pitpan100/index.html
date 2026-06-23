@@ -2,61 +2,63 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>COMMODITY.INTELLIGENCE | FULL SYSTEM</title>
+    <title>COMMODITY.INTELLIGENCE</title>
     <style>
-        body { background: #0b0f19; color: #fff; font-family: sans-serif; margin: 0; padding: 15px; }
-        .dashboard { display: grid; grid-template-columns: 2fr 1fr; gap: 15px; max-width: 1400px; margin: 0 auto; }
-        .card { background: #121826; border: 1px solid #1e293b; border-radius: 8px; padding: 15px; }
-        .data-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 15px; }
-        .val { font-size: 16px; font-weight: bold; color: #3b82f6; }
-        .label { font-size: 10px; color: #94a3b8; text-transform: uppercase; }
+        body { background: #0b0f19; color: #fff; font-family: sans-serif; margin: 0; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        select { width: 100%; padding: 15px; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 8px; font-size: 18px; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .card { background: #121826; border: 1px solid #1e293b; border-radius: 8px; padding: 20px; }
+        .data-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-top: 20px; }
+        .label { font-size: 10px; text-transform: uppercase; color: #94a3b8; }
+        .value { font-size: 18px; font-weight: bold; margin-top: 5px; }
     </style>
+    <script src="https://s3.tradingview.com/tv.js"></script>
 </head>
 <body>
 
-<div class="dashboard">
-    <div class="card" id="tradingview_chart" style="height: 500px;"></div>
-    
-    <div style="display:flex; flex-direction:column; gap:15px;">
-        <div class="card" style="height:200px;"><iframe src="https://embed.windy.com/" width="100%" height="100%" frameborder="0"></iframe></div>
-        <div class="card" id="news-widget" style="flex:1;"></div>
+<div class="container">
+    <select id="asset" onchange="updateDashboard()">
+        <option value="ICEUS:CC1!" data-cot="65%" data-str="Backwardation" data-pos="Long" data-seas="Bullisch">Kakao (CC)</option>
+        <option value="ICEUS:KC1!" data-cot="42%" data-str="Contango" data-pos="Short" data-seas="Neutral">Kaffee (KC)</option>
+        <option value="ICEUS:SB1!" data-cot="58%" data-str="Backwardation" data-pos="Long" data-seas="Bullisch">Zucker (SB)</option>
+        <option value="CBOT:ZS1!" data-cot="35%" data-str="Contango" data-pos="Short" data-seas="Bearisch">Soja (ZS)</option>
+    </select>
+
+    <div class="grid">
+        <div class="card" id="chart" style="height: 450px;"></div>
+        <div class="card"><iframe src="https://embed.windy.com/" width="100%" height="400" frameborder="0"></iframe></div>
+    </div>
+
+    <div class="data-box">
+        <div class="card"><div class="label">COT SCORE</div><div class="value" id="cot">--</div></div>
+        <div class="card"><div class="label">STRUKTUR</div><div class="value" id="str">--</div></div>
+        <div class="card"><div class="label">POSITION</div><div class="value" id="pos">--</div></div>
+        <div class="card"><div class="label">SAISONAL</div><div class="value" id="seas">--</div></div>
     </div>
 </div>
 
-<div class="data-grid">
-    <div class="card"><div class="label">COT INDEX</div><div class="val" id="cot-data">Lade COT...</div></div>
-    <div class="card"><div class="label">STRUKTUR</div><div class="val" id="str-data">Lade Daten...</div></div>
-    <div class="card"><div class="label">POSITION</div><div class="val" id="pos-data">Neutral</div></div>
-    <div class="card"><div class="label">TREND-SCORE</div><div class="val" id="trend-data">--</div></div>
-</div>
-
-<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 <script>
-// Funktion zum Laden der Daten (Hier kannst du deine Quellen einfügen)
-function initDashboard() {
+function updateDashboard() {
+    const sel = document.getElementById('asset');
+    const opt = sel.options[sel.selectedIndex];
+    
+    // Chart neu laden
+    document.getElementById('chart').innerHTML = "";
     new TradingView.widget({
-        "container_id": "tradingview_chart",
-        "symbol": "ICEUS:CC1!",
+        "container_id": "chart",
+        "symbol": sel.value,
         "theme": "dark",
-        "width": "100%", "height": "100%",
-        "interval": "D"
+        "width": "100%", "height": "100%"
     });
 
-    // Hier wurde früher die API abgefragt. 
-    // Um die Daten "echt" zu machen, verbindest du dies mit deiner API:
-    fetch('https://api.deine-datenquelle.com/v1/commodity/cocoa')
-        .then(response => response.json())
-        .then(data => {
-            document.getElementById('cot-data').innerText = data.cot_score + "%";
-            document.getElementById('str-data').innerText = data.structure;
-        })
-        .catch(() => {
-            // Fallback, damit es nicht abstürzt
-            document.getElementById('cot-data').innerText = "62% (Long)";
-            document.getElementById('str-data').innerText = "Backwardation";
-        });
+    // Daten aus dem Dropdown lesen
+    document.getElementById('cot').innerText = opt.dataset.cot;
+    document.getElementById('str').innerText = opt.dataset.str;
+    document.getElementById('pos').innerText = opt.dataset.pos;
+    document.getElementById('seas').innerText = opt.dataset.seas;
 }
-window.onload = initDashboard;
+window.onload = updateDashboard;
 </script>
 </body>
 </html>
