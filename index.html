@@ -2,59 +2,48 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Commodity Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commodity Terminal</title>
     <style>
         body { background: #0b0f19; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
         .card { max-width: 450px; margin: auto; background: #0f172a; border-radius: 16px; padding: 20px; border: 1px solid #1e293b; }
-        .select-wrapper { position: relative; margin-bottom: 20px; }
-        select { width: 100%; padding: 15px; background: #1e293b; color: white; border-radius: 10px; border: 1px solid #334155; font-weight: bold; appearance: none; }
-        .select-wrapper::after { content: '▼'; position: absolute; right: 15px; top: 18px; color: #94a3b8; pointer-events: none; }
-        canvas { width: 100%; height: 180px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; display: block; }
-        .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .stat-box { background: #1e293b; padding: 12px; border-radius: 8px; text-align: center; }
-        .stat-label { font-size: 9px; text-transform: uppercase; color: #64748b; margin-bottom: 4px; }
-        .stat-val { font-size: 13px; font-weight: bold; }
+        select { width: 100%; padding: 15px; background: #1e293b; color: white; border-radius: 10px; border: 1px solid #334155; font-weight: bold; margin-bottom: 20px; }
+        canvas { width: 100%; height: 180px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; }
+        .news { margin-top: 15px; font-size: 13px; color: #cbd5e1; border-top: 1px solid #1e293b; padding-top: 10px; line-height: 1.5; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div class="select-wrapper">
-            <select id="assets" onchange="update()"></select>
-        </div>
+        <select id="assets" onchange="update()"></select>
         <canvas id="chart"></canvas>
-        <div class="stats">
-            <div class="stat-box"><div class="stat-label">COT Score</div><div class="stat-val" id="cot">--</div></div>
-            <div class="stat-box"><div class="stat-label">Position</div><div class="stat-val" id="pos">--</div></div>
-            <div class="stat-box"><div class="stat-label">Saisonalität</div><div class="stat-val" id="sea">--</div></div>
-            <div class="stat-box"><div class="stat-label">Kurve</div><div class="stat-val" id="str">--</div></div>
-        </div>
+        <div class="news" id="news">Wähle ein Asset...</div>
     </div>
     <script>
-        const data = {
-            "Gold": { cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango" },
-            "Rohöl": { cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation" },
-            "Silber": { cot: "38/100", pos: "Net-Short", sea: "Bärisch", str: "Contango" },
-            "Kupfer": { cot: "68/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation" }
+        const db = {
+            "Gold": { n: "Gold (GC=F)", news: "Zentralbank-Käufe auf Rekordniveau." },
+            "Rohöl": { n: "Rohöl (CL=F)", news: "OPEC+ signalisiert Förderkürzungen." },
+            "Silber": { n: "Silber (SI=F)", news: "Industrielle Nachfrage wächst massiv." },
+            "Kupfer": { n: "Kupfer (HG=F)", news: "Minen-Engpässe verknappen Angebot." },
+            "Erdgas": { n: "Erdgas (NG=F)", news: "Hitzewellen treiben Energiebedarf." },
+            "Soja": { n: "Sojabohnen (ZS=F)", news: "Exportnachfrage bleibt trotz hoher Preise stark." },
+            "Mais": { n: "Mais (ZC=F)", news: "US-Ernteberichte zeigen Stabilität." },
+            "Weizen": { n: "Weizen (ZW=F)", news: "Wetterbedingungen in Russland belasten Ernte." },
+            "Kaffee": { n: "Kaffee (KC=F)", news: "Ernteausfälle in Brasilien treiben Preise." },
+            "Kakao": { n: "Kakao (CC=F)", news: "Historische Knappheit durch Wetterkapriolen." },
+            "Zucker": { n: "Zucker (SB=F)", news: "Produktionsprognosen wurden gesenkt." }
         };
         const sel = document.getElementById('assets');
-        Object.keys(data).forEach(k => sel.innerHTML += `<option value="${k}">${k}</option>`);
-
+        Object.keys(db).forEach(k => sel.innerHTML += `<option value="${k}">${k}</option>`);
         function update() {
-            const v = data[sel.value];
-            document.getElementById('cot').innerText = v.cot;
-            document.getElementById('pos').innerText = v.pos;
-            document.getElementById('sea').innerText = v.sea;
-            document.getElementById('str').innerText = v.str;
+            document.getElementById('news').innerText = "📰 " + db[sel.value].news;
             draw();
         }
-
         function draw() {
-            const canvas = document.getElementById('chart');
-            const ctx = canvas.getContext('2d');
+            const canvas = document.getElementById('chart'), ctx = canvas.getContext('2d');
             canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.strokeStyle = '#10b981'; ctx.lineWidth = 3; ctx.beginPath();
-            for(let i=0; i<10; i++) ctx.lineTo(i * (canvas.width/9), Math.random() * canvas.height);
+            for(let i=0; i<20; i++) ctx.lineTo(i * (canvas.width/19), Math.random() * (canvas.height-40) + 20);
             ctx.stroke();
         }
         update();
