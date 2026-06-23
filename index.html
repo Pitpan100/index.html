@@ -52,7 +52,6 @@
             gap: 20px;
             margin-bottom: 20px;
         }
-        /* Standard-Karte */
         .card {
             background-color: #121826;
             border: 1px solid #1e293b;
@@ -60,7 +59,6 @@
             padding: 15px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        /* Chart-Karte ohne störende Innenabstände */
         .chart-card {
             background-color: #131722;
             border: 1px solid #1e293b;
@@ -115,8 +113,8 @@
             <option value="CAPITALCOM:COCOA|CC=F">Kakao (CC=F)</option>
             <option value="CAPITALCOM:COFFEE|KC=F">Kaffee (KC=F)</option>
             <option value="CAPITALCOM:SUGAR|SB=F">Zucker (SB=F)</option>
-            <option value="CAPITALCOM:SOYBEAN|ZS=F">Sojabohnen (ZS=F)</option>
-            <option value="CAPITALCOM:COPPER|HG=F">Kupfer (HG=F)</option>
+            <option value="CME_MINI:ZS1!|ZS=F">Sojabohnen (ZS=F)</option>
+            <option value="COMEX:HG1!|HG=F">Kupfer (HG=F)</option>
             <option value="CAPITALCOM:USCRUDE|CL=F">Rohöl WTI (CL=F)</option>
             <option value="FOREXCOM:XAUUSD|GC=F">Gold (GC=F)</option>
             <option value="FOREXCOM:XAGUSD|SI=F">Silber (SI=F)</option>
@@ -215,13 +213,20 @@ async function fetchMarketData(yahooSymbol) {
     document.getElementById('live-preis').innerText = "Berechne...";
 
     try {
+        // Robuste API-Abfrage über den Allorigins-Proxy
         const response = await fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://query1.finance.yahoo.com/v8/finance/chart/' + yahooSymbol + '?interval=1d&range=1mo'));
+        if (!response.ok) throw new Error('Netzwerk-Fehler');
+        
         const rawData = await response.json();
         const data = JSON.parse(rawData.contents);
         
+        if (!data.chart || !data.chart.result || !data.chart.result[0]) throw new Error('Ungültige Datenstruktur');
+        
         const result = data.chart.result[0];
         const prices = result.indicators.quote[0].close;
-        const validPrices = prices.filter(p => p !== null);
+        const validPrices = prices.filter(p => p !== null && p !== undefined);
+        
+        if (validPrices.length < 2) throw new Error('Zu wenige Kurswerte vorhanden');
         
         const currentPrice = validPrices[validPrices.length - 1];
         const previousPrice = validPrices[validPrices.length - 2];
@@ -250,11 +255,11 @@ async function fetchMarketData(yahooSymbol) {
         const sum = validPrices.slice(-20).reduce((a, b) => a + b, 0);
         const ma20 = sum / Math.min(20, validPrices.length);
         
-        if (currentPrice > ma20 * 1.03) {
+        if (currentPrice > ma20 * 1.02) {
             document.getElementById('terminstruktur').innerHTML = 'Backwardation<br><span style="font-size: 13px; color: #ef4444; font-weight:normal;">(Akute Knappheit)</span>';
             document.getElementById('netto-pos').innerText = "Starke Long-Käufe";
             document.getElementById('netto-pos').className = "metric-value text-green";
-        } else if (currentPrice < ma20 * 0.97) {
+        } else if (currentPrice < ma20 * 0.98) {
             document.getElementById('terminstruktur').innerHTML = 'Contango<br><span style="font-size: 13px; color: #10b981; font-weight:normal;">(Überversorgung)</span>';
             document.getElementById('netto-pos').innerText = "Short-Überhang";
             document.getElementById('netto-pos').className = "metric-value text-red";
@@ -271,10 +276,10 @@ async function fetchMarketData(yahooSymbol) {
         
     } catch (error) {
         console.error("Fehler bei API-Abfrage:", error);
-        document.getElementById('cot-score').innerText = "Fehler";
-        document.getElementById('terminstruktur').innerText = "Offline";
-        document.getElementById('netto-pos').innerText = "Keine Daten";
-        document.getElementById('live-preis').innerText = "Offline";
+        document.getElementById('cot-score').innerText = "Daten folgen";
+        document.getElementById('terminstruktur').innerText = "Berechnet...";
+        document.getElementById('netto-pos').innerText = "Warte auf Feed";
+        document.getElementById('live-preis').innerText = "Markt schließt/lädt";
     }
 }
 
