@@ -3,27 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pro Terminal</title>
+    <title>Commodity Pro</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background: #050505; color: #e2e8f0; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
-        .card { max-width: 450px; margin: auto; background: #0f172a; border-radius: 16px; padding: 20px; border: 1px solid #1e293b; }
-        select { width: 100%; padding: 15px; background: #1e293b; color: white; border-radius: 10px; border: 1px solid #334155; font-weight: bold; margin-bottom: 20px; }
-        #chart { width: 100%; height: 250px; background: #020617; border-radius: 8px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 20px; }
-        .box { background: #1e293b; padding: 10px; border-radius: 8px; text-align: center; }
-        .label { font-size: 9px; text-transform: uppercase; color: #64748b; }
-        .val { font-size: 13px; font-weight: bold; color: #fff; margin-top: 4px; }
+        body { background: #050505; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
+        .card { max-width: 450px; margin: auto; background: #0d0d0d; border: 1px solid #222; border-radius: 12px; padding: 15px; }
+        select { width: 100%; padding: 12px; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 8px; margin-bottom: 15px; font-weight: bold; }
+        #chart { width: 100%; height: 220px; background: #000; border-radius: 8px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .box { background: #1a1a1a; padding: 10px; border-radius: 6px; text-align: center; }
+        .label { font-size: 8px; color: #888; text-transform: uppercase; }
+        .val { font-size: 12px; font-weight: bold; margin-top: 3px; }
     </style>
 </head>
 <body>
     <div class="card">
-        <select id="assets" onchange="update()">
-            <option value="Gold">Gold</option>
-            <option value="Rohöl">Rohöl</option>
-            <option value="Silber">Silber</option>
-            <option value="Kupfer">Kupfer</option>
-        </select>
+        <select id="sel" onchange="upd()"></select>
         <div id="chart"></div>
         <div class="grid">
             <div class="box"><div class="label">COT Score</div><div class="val" id="cot">--</div></div>
@@ -33,28 +28,26 @@
         </div>
     </div>
     <script>
-        const db = {
-            "Gold": { cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango" },
-            "Rohöl": { cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation" },
-            "Silber": { cot: "38/100", pos: "Net-Short", sea: "Bärisch", str: "Contango" },
-            "Kupfer": { cot: "68/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation" }
+        const assets = {
+            "Gold": { c: "41/100", p: "Net-Short", s: "Bärisch", k: "Contango" },
+            "Rohöl": { c: "54/100", p: "Net-Long", s: "Bullisch", k: "Backwardation" },
+            "Silber": { c: "38/100", p: "Net-Short", s: "Bärisch", k: "Contango" },
+            "Kupfer": { c: "68/100", p: "Net-Long", s: "Bullisch", k: "Backwardation" },
+            "Soja": { c: "72/100", p: "Net-Long", s: "Neutral", k: "Contango" }
         };
-
-        const chart = LightweightCharts.createChart(document.getElementById('chart'), { 
-            width: 410, height: 250, layout: { background: { color: '#020617' }, textColor: '#94a3b8' }
-        });
-        const series = chart.addCandlestickSeries();
-        // Beispiel-Daten (später kannst du hier echte Fetch-Daten einfügen)
-        series.setData([{time: '2026-06-20', open: 100, high: 110, low: 90, close: 105}]);
-
-        function update() {
-            const asset = db[document.getElementById('assets').value];
-            document.getElementById('cot').innerText = asset.cot;
-            document.getElementById('pos').innerText = asset.pos;
-            document.getElementById('sea').innerText = asset.sea;
-            document.getElementById('str').innerText = asset.str;
+        const sel = document.getElementById('sel');
+        Object.keys(assets).forEach(k => sel.innerHTML += `<option value="${k}">${k}</option>`);
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), { width: 418, height: 220, layout: { background: { color: '#000' } }});
+        const cs = chart.addCandlestickSeries();
+        cs.setData([{time:'2026-06-20', open:100, high:110, low:90, close:105}]);
+        function upd() {
+            const v = assets[sel.value];
+            document.getElementById('cot').innerText = v.c;
+            document.getElementById('pos').innerText = v.p;
+            document.getElementById('sea').innerText = v.s;
+            document.getElementById('str').innerText = v.k;
         }
-        update();
+        upd();
     </script>
 </body>
 </html>
