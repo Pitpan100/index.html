@@ -3,51 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Commodity Pro</title>
+    <title>Pro Market Terminal</title>
     <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { background: #050505; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
-        .card { max-width: 450px; margin: auto; background: #0d0d0d; border: 1px solid #222; border-radius: 12px; padding: 15px; }
-        select { width: 100%; padding: 12px; background: #1a1a1a; color: #fff; border: 1px solid #333; border-radius: 8px; margin-bottom: 15px; font-weight: bold; }
-        #chart { width: 100%; height: 220px; background: #000; border-radius: 8px; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
-        .box { background: #1a1a1a; padding: 10px; border-radius: 6px; text-align: center; }
-        .label { font-size: 8px; color: #888; text-transform: uppercase; }
-        .val { font-size: 12px; font-weight: bold; margin-top: 3px; }
+        body { background: #000; color: #fff; font-family: -apple-system, sans-serif; margin: 0; padding: 10px; }
+        .card { max-width: 450px; margin: auto; background: #0a0a0a; border: 1px solid #222; border-radius: 12px; padding: 15px; }
+        select { width: 100%; padding: 12px; background: #111; color: #fff; border: 1px solid #444; border-radius: 8px; font-weight: bold; margin-bottom: 15px; }
+        #chart { width: 100%; height: 220px; background: #000; border-radius: 8px; border: 1px solid #222; }
     </style>
 </head>
 <body>
     <div class="card">
-        <select id="sel" onchange="upd()"></select>
+        <select id="sel" onchange="loadData()">
+            <option value="GC=F">Gold</option>
+            <option value="CL=F">Rohöl</option>
+            <option value="SI=F">Silber</option>
+            <option value="HG=F">Kupfer</option>
+            <option value="NG=F">Erdgas</option>
+            <option value="ZS=F">Soja</option>
+            <option value="ZC=F">Mais</option>
+            <option value="ZW=F">Weizen</option>
+            <option value="KC=F">Kaffee</option>
+            <option value="CC=F">Kakao</option>
+            <option value="SB=F">Zucker</option>
+        </select>
         <div id="chart"></div>
-        <div class="grid">
-            <div class="box"><div class="label">COT Score</div><div class="val" id="cot">--</div></div>
-            <div class="box"><div class="label">Position</div><div class="val" id="pos">--</div></div>
-            <div class="box"><div class="label">Saisonalität</div><div class="val" id="sea">--</div></div>
-            <div class="box"><div class="label">Kurve</div><div class="val" id="str">--</div></div>
-        </div>
     </div>
     <script>
-        const assets = {
-            "Gold": { c: "41/100", p: "Net-Short", s: "Bärisch", k: "Contango" },
-            "Rohöl": { c: "54/100", p: "Net-Long", s: "Bullisch", k: "Backwardation" },
-            "Silber": { c: "38/100", p: "Net-Short", s: "Bärisch", k: "Contango" },
-            "Kupfer": { c: "68/100", p: "Net-Long", s: "Bullisch", k: "Backwardation" },
-            "Soja": { c: "72/100", p: "Net-Long", s: "Neutral", k: "Contango" }
-        };
-        const sel = document.getElementById('sel');
-        Object.keys(assets).forEach(k => sel.innerHTML += `<option value="${k}">${k}</option>`);
-        const chart = LightweightCharts.createChart(document.getElementById('chart'), { width: 418, height: 220, layout: { background: { color: '#000' } }});
+        const chart = LightweightCharts.createChart(document.getElementById('chart'), { 
+            width: 418, height: 220, 
+            layout: { background: { color: '#000' }, textColor: '#ccc' },
+            grid: { vertLines: { color: '#111' }, horzLines: { color: '#111' } }
+        });
         const cs = chart.addCandlestickSeries();
-        cs.setData([{time:'2026-06-20', open:100, high:110, low:90, close:105}]);
-        function upd() {
-            const v = assets[sel.value];
-            document.getElementById('cot').innerText = v.c;
-            document.getElementById('pos').innerText = v.p;
-            document.getElementById('sea').innerText = v.s;
-            document.getElementById('str').innerText = v.k;
+
+        async function loadData() {
+            const ticker = document.getElementById('sel').value;
+            // Echte Daten direkt von Yahoo Finance
+            const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
+            try {
+                const res = await fetch(url);
+                const data = await res.json();
+                const q = data.chart.result[0].indicators.quote[0];
+                const ts = data.chart.result[0].timestamp;
+                const formatted = ts.map((t, i) => ({
+                    time: t,
+                    open: q.open[i],
+                    high: q.high[i],
+                    low: q.low[i],
+                    close: q.close[i]
+                }));
+                cs.setData(formatted);
+            } catch (e) {
+                console.error("Daten konnten nicht geladen werden", e);
+            }
         }
-        upd();
+        loadData();
     </script>
 </body>
 </html>
