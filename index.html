@@ -7,52 +7,39 @@
         body { background: #0b0f19; color: #fff; font-family: sans-serif; margin: 0; padding: 20px; }
         .container { max-width: 1000px; margin: 0 auto; }
         .card { background: #121826; border: 1px solid #1e293b; border-radius: 8px; padding: 20px; margin-bottom: 20px; }
-        .grid-data { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
-        .label { color: #94a3b8; font-size: 11px; text-transform: uppercase; margin-bottom: 8px; }
-        .value { font-size: 22px; font-weight: bold; color: #fff; }
-        select { width: 100%; padding: 15px; background: #1e293b; color: white; border: 1px solid #334155; border-radius: 8px; font-size: 16px; margin-bottom: 20px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <select id="asset-select" onchange="updateData()">
-        <option value="COCOA">Kakao (CC)</option>
-        <option value="COFFEE">Kaffee (KC)</option>
-        <option value="SUGAR">Zucker (SB)</option>
-        <option value="SOYBEANS">Sojabohnen (ZS)</option>
-        <option value="COPPER">Kupfer (HG)</option>
-        <option value="CRUDE_OIL">Rohöl (CL)</option>
-    </select>
-
-    <div class="grid-data">
-        <div class="card"><div class="label">MARTSENTIMENT (RSI 14)</div><div class="value" id="sentiment">Wird geladen...</div></div>
-        <div class="card"><div class="label">TERMINSTRUKTUR</div><div class="value" id="struktur">Wird geladen...</div></div>
-        <div class="card"><div class="label">NETTO-POSITIONIERUNG</div><div class="value" id="position">Wird geladen...</div></div>
-        <div class="card"><div class="label">SAISONALER TREND</div><div class="value" id="trend">Wird geladen...</div></div>
+    <h2 style="color: #3b82f6;">LIVE-MARKTDATEN</h2>
+    
+    <div class="card">
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-overview.js" async>
+        {
+          "colorTheme": "dark",
+          "dateRange": "12M",
+          "showChart": false,
+          "locale": "de",
+          "width": "100%",
+          "height": "400",
+          "tabs": [ { "title": "Rohstoffe", "symbols": [ 
+            { "s": "ICEUS:CC1!", "d": "Kakao" }, 
+            { "s": "ICEUS:KC1!", "d": "Kaffee" }, 
+            { "s": "ICEUS:SB1!", "d": "Zucker" }, 
+            { "s": "CBOT:ZS1!", "d": "Sojabohnen" }, 
+            { "s": "COMEX:HG1!", "d": "Kupfer" }, 
+            { "s": "NYMEX:CL1!", "d": "Rohöl WTI" } 
+          ] } ]
+        }
+        </script>
     </div>
 
     <div class="card">
-        <div class="label" style="margin-bottom: 15px;">AKTUELLE MARKT-NEWS</div>
-        <div id="news-container">
-            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
-            { "feedMode": "market", "market": "commodities", "colorTheme": "dark", "isTransparent": true, "displayMode": "regular", "width": "100%", "height": "400" }
-            </script>
-        </div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-timeline.js" async>
+        { "feedMode": "market", "market": "commodities", "colorTheme": "dark", "width": "100%", "height": "400" }
+        </script>
     </div>
 </div>
-
-<script>
-function updateData() {
-    const asset = document.getElementById('asset-select').value;
-    // Hier kannst du später die Werte anbinden. 
-    // Aktuell stabil als Platzhalter, um keine Fehler auf dem iPad zu provozieren.
-    document.getElementById('sentiment').innerText = "Neutral (51%)";
-    document.getElementById('struktur').innerText = asset === 'CRUDE_OIL' ? "Contango" : "Backwardation";
-    document.getElementById('position').innerText = "Long-Käufe";
-    document.getElementById('trend').innerText = "Aufwärts";
-}
-window.onload = updateData;
-</script>
 </body>
 </html>
