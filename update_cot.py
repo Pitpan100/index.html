@@ -9,6 +9,8 @@ ASSETS = {
     "CL=F": {"cftc_name": "CRUDE OIL, LIGHT SWEET - NEW YORK MERCANTILE EXCHANGE", "name": "Rohöl (Crude Oil)"},
     "NG=F": {"cftc_name": "NATURAL GAS - NEW YORK MERCANTILE EXCHANGE", "name": "Erdgas (Nat Gas)"},
     "GC=F": {"cftc_name": "GOLD - COMMODITY EXCHANGE INC.", "name": "Gold"},
+    "SI=F": {"cftc_name": "SILVER - COMMODITY EXCHANGE INC.", "name": "Silber (Silver)"},
+    "HG=F": {"cftc_name": "COPPER - COMMODITY EXCHANGE INC.", "name": "Kupfer (Copper)"},
     "ZW=F": {"cftc_name": "WHEAT - CHICAGO BOARD OF TRADE", "name": "Weizen (Wheat)"},
     "ZC=F": {"cftc_name": "CORN - CHICAGO BOARD OF TRADE", "name": "Mais (Corn)"},
     "KC=F": {"cftc_name": "COFFEE C - ICE FUTURES U.S.", "name": "Kaffee (Coffee)"},
@@ -23,7 +25,8 @@ def get_live_term_structure(ticker):
         price_front = data['chart']['result'][0]['meta']['regularMarketPrice']
         
         clean = ticker.replace('=F', '')
-        thresholds = {"CC": 6500, "KC": 190, "CL": 78, "NG": 2.60, "GC": 2350}
+        # Schwellenwerte für Backwardation angepasst (inklusive 2026er Silber/Kupfer Levels)
+        thresholds = {"CC": 7000, "KC": 200, "CL": 78, "NG": 2.40, "GC": 4100, "SI": 64.00, "HG": 6.20}
         
         if clean in thresholds and price_front > thresholds[clean]:
             return "Backwardation"
@@ -72,11 +75,11 @@ def main():
         
         cot_score = int(((net_position - min_pos) / (max_pos - min_pos)) * 100) if max_pos != min_pos else 50
             
+        # Saisonalitäts-Matrix
         seasonality_map = {
-            "CL=F": "Bullisch (Sommer-Saison)", "NG=F": "Neutral (Lageraufbau)", 
-            "GC=F": "Bärisch (Sommer-Tief)", "ZW=F": "Bärisch (Ernte-Druck)", 
-            "ZC=F": "Neutral (Wachstumsphase)", "KC=F": "Bullisch (Frostfenster)", 
-            "CC=F": "Neutral (Saisonal)"
+            "CL=F": "Bullisch", "NG=F": "Neutral", "GC=F": "Bärisch", 
+            "SI=F": "Bärisch", "HG=F": "Bullisch",
+            "ZW=F": "Bärisch", "ZC=F": "Bärisch", "KC=F": "Bullisch", "CC=F": "Neutral"
         }
         
         output_data[ticker] = {
@@ -84,11 +87,9 @@ def main():
             "cotScore": cot_score,
             "position": position_string,
             "seasonality": seasonality_map.get(ticker, "Neutral"),
-            "structure": get_live_term_structure(ticker),
-            "weather": "Neutral" if ticker != "NG=F" else "Bullisch (US-Hitzewelle)"
+            "structure": get_live_term_structure(ticker)
         }
 
-    # Robustes Einlesen und Ersetzen ohne Zeilen-Stolpersteine
     if not os.path.exists("index.html"):
         print("index.html nicht gefunden. Skript bricht ab.")
         return
@@ -98,7 +99,7 @@ def main():
 
     marker = "// COT_DATA_PLACEHOLDER"
     if marker not in html_content:
-        print("Marker fehlt in index.html! Füge Daten temporär ein.")
+        print("Marker fehlt in index.html!")
         return
 
     parts = html_content.split(marker)
