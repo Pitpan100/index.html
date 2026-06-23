@@ -3,26 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Commodity Intelligence Hub</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Commodity Intelligence</title>
     <style>
         body { background: #0b0f19; color: #f3f4f6; font-family: -apple-system, sans-serif; margin: 0; padding: 15px; }
         .card { background: #0f172a; border-radius: 16px; padding: 20px; border: 1px solid #1e293b; max-width: 400px; margin: auto; }
-        .ticker { background: #020617; border: 1px solid #ef4444; color: #f87171; padding: 8px; border-radius: 8px; font-size: 11px; margin-bottom: 15px; font-weight: bold; }
+        #ticker-wrap { background: #020617; border: 1px solid #ef4444; border-radius: 8px; padding: 10px; margin-bottom: 15px; font-size: 11px; font-weight: bold; color: #f87171; cursor: pointer; text-align: center; }
         select { width: 100%; padding: 12px; background: #1e293b; color: white; border-radius: 8px; border: none; font-weight: bold; margin-bottom: 15px; }
-        .price { font-size: 28px; font-weight: 900; color: #34d399; text-align: center; margin-bottom: 15px; }
+        .price { font-size: 32px; font-weight: 900; color: #34d399; text-align: center; margin-bottom: 15px; }
         #chartCanvas { width: 100%; height: 150px; background: #020617; border-radius: 8px; border: 1px solid #1e293b; display: block; margin-bottom: 15px; }
-        .news-box { background: #020617; padding: 12px; border-radius: 8px; font-size: 12px; color: #cbd5e1; border: 1px solid #1e293b; margin-bottom: 15px; }
+        .news-box { background: #020617; padding: 12px; border-radius: 8px; font-size: 12px; color: #cbd5e1; border: 1px solid #1e293b; margin-bottom: 15px; line-height: 1.4; }
         .row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1e293b; font-size: 13px; }
-        .val { font-weight: 700; }
+        .label { color: #94a3b8; }
+        .val { font-weight: 700; color: #f8fafc; }
     </style>
 </head>
 <body>
     <div class="card">
-        <div class="ticker" id="ticker">⚠️ Lade Live-Alerts...</div>
+        <div id="ticker-wrap" onclick="toggleTicker()">⚠️ ALERT: Marktanalyse aktiv - Klick zum Pausieren</div>
         <select id="asset-select" onchange="updateUI()"></select>
-        <div id="price" class="price">--</div>
+        <div id="price" class="price">Lade Kurs...</div>
         <canvas id="chartCanvas"></canvas>
-        <div class="news-box" id="news">Lade News...</div>
+        <div id="news-box" class="news-box">📰 Lade Nachrichten...</div>
         <div id="stats">
             <div class="row"><span class="label">COT Score:</span><span id="cot" class="val">--</span></div>
             <div class="row"><span class="label">Position:</span><span id="pos" class="val">--</span></div>
@@ -33,16 +35,31 @@
 
     <script>
         const assets = {
-            "CL=F": { name: "Rohöl", cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "OPEC+ signalisiert Kürzungen." },
-            "GC=F": { name: "Gold", cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Zentralbank-Käufe stützen den Markt." },
-            "SI=F": { name: "Silber", cot: "38/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Industrielle Nachfrage wächst." },
-            "NG=F": { name: "Erdgas", cot: "76/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "Sommerhitze erhöht Strombedarf." },
-            "HG=F": { name: "Kupfer", cot: "68/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "Minen-Engpässe bei Kupfer." },
-            "ZC=F": { name: "Mais", cot: "51/100", pos: "Neutral", sea: "Bärisch", str: "Contango", news: "Gute US-Ernteaussichten." }
+            "CL=F": { name: "Rohöl", cot: "54/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "OPEC+ signalisiert Förderkürzungen zur Preisstützung." },
+            "GC=F": { name: "Gold", cot: "41/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Zentralbank-Goldkäufe setzen den Trend." },
+            "SI=F": { name: "Silber", cot: "38/100", pos: "Net-Short", sea: "Bärisch", str: "Contango", news: "Industrielle Nachfrage (Photovoltaik) wächst." },
+            "NG=F": { name: "Erdgas", cot: "76/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "Hitzewellen treiben den Energiebedarf für AC." },
+            "HG=F": { name: "Kupfer", cot: "68/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "Minen-Engpässe verknappen das Angebot." },
+            "ZW=F": { name: "Weizen", cot: "49/100", pos: "Neutral", sea: "Bärisch", str: "Contango", news: "Trockenheit in Russland beeinflusst Ernte." },
+            "ZC=F": { name: "Mais", cot: "51/100", pos: "Neutral", sea: "Bärisch", str: "Contango", news: "US-Anbauflächen zeigen stabile Erträge." },
+            "ZS=F": { name: "Sojabohnen", cot: "72/100", pos: "Net-Long", sea: "Neutral", str: "Contango", news: "Exportnachfrage bleibt trotz Preisen hoch." },
+            "KC=F": { name: "Kaffee", cot: "73/100", pos: "Net-Long", sea: "Bullisch", str: "Backwardation", news: "Ernteausfälle in Brasilien treiben Preise." },
+            "CC=F": { name: "Kakao", cot: "36/100", pos: "Net-Short", sea: "Neutral", str: "Backwardation", news: "Wetterkapriolen in Westafrika führen zu Angebotsknappheit." }
         };
 
+        let tickerPaused = false;
+        function toggleTicker() { 
+            tickerPaused = !tickerPaused; 
+            document.getElementById('ticker-wrap').innerText = tickerPaused ? "⚠️ PAUSIERT - Klick zum Fortfahren" : "⚠️ ALERT: Marktanalyse aktiv - Klick zum Pausieren";
+        }
+
         const sel = document.getElementById('asset-select');
-        Object.keys(assets).forEach(key => sel.innerHTML += `<option value="${key}">${assets[key].name}</option>`);
+        Object.keys(assets).forEach(key => {
+            let opt = document.createElement('option');
+            opt.value = key;
+            opt.innerHTML = assets[key].name;
+            sel.appendChild(opt);
+        });
 
         async function updateUI() {
             const ticker = sel.value;
@@ -51,10 +68,9 @@
             document.getElementById('pos').innerText = meta.pos;
             document.getElementById('season').innerText = meta.sea;
             document.getElementById('struct').innerText = meta.str;
-            document.getElementById('news').innerText = "📰 " + meta.news;
+            document.getElementById('news-box').innerText = "📰 " + meta.news;
             
             try {
-                // Proxy für CORS-Umgehung (damit das iPad die Yahoo-Daten nicht blockiert)
                 const url = `https://corsproxy.io/?https://query2.finance.yahoo.com/v8/finance/chart/${ticker}?range=1mo&interval=1d`;
                 const res = await fetch(url);
                 const data = await res.json();
@@ -79,6 +95,7 @@
             });
             ctx.stroke();
         }
+        
         updateUI();
         setInterval(updateUI, 60000);
     </script>
