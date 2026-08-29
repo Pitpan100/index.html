@@ -1,68 +1,68 @@
 {
     "GC=F": {
-        "cot_score": "35% (Bärisch)",
+        "cot_score": "46% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "-2.9K Net Short",
+        "inventories": "-0.2K Net Short",
         "seasonality": "Bullisch (Herbst- & Neujahrs-Rallye)"
     },
     "CL=F": {
-        "cot_score": "75% (Optimistisch)",
+        "cot_score": "90% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+15.2K Net Long",
+        "inventories": "+17.0K Net Long",
         "seasonality": "Bullisch (Driving Season)"
     },
     "SI=F": {
-        "cot_score": "71% (Optimistisch)",
+        "cot_score": "74% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+21.4K Net Long",
+        "inventories": "+23.3K Net Long",
         "seasonality": "Bullisch (Herbst- & Neujahrs-Rallye)"
     },
     "HG=F": {
-        "cot_score": "78% (Optimistisch)",
+        "cot_score": "77% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+79.5K Net Long",
+        "inventories": "+84.3K Net Long",
         "seasonality": "Saisonal Neutral"
     },
     "NG=F": {
         "cot_score": "51% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+1.9K Net Long",
+        "inventories": "+2.8K Net Long",
         "seasonality": "Moderat Bullisch (Klimaanlagen)"
     },
     "ZS=F": {
-        "cot_score": "75% (Optimistisch)",
+        "cot_score": "94% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+170.4K Net Long",
+        "inventories": "+21.9K Net Long",
         "seasonality": "Saisonal Neutral"
     },
     "ZC=F": {
-        "cot_score": "69% (Optimistisch)",
+        "cot_score": "77% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+252.7K Net Long",
+        "inventories": "+406.2K Net Long",
         "seasonality": "Saisonal Neutral"
     },
     "ZW=F": {
-        "cot_score": "56% (Optimistisch)",
+        "cot_score": "47% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+15.9K Net Long",
+        "inventories": "-11.7K Net Short",
         "seasonality": "Bärisch (Haupternte)"
     },
     "KC=F": {
-        "cot_score": "73% (Optimistisch)",
+        "cot_score": "25% (Bärisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+30.7K Net Long",
+        "inventories": "-3.4K Net Short",
         "seasonality": "Saisonal Neutral"
     },
     "CC=F": {
         "cot_score": "35% (Bärisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "-17.1K Net Short",
+        "inventories": "-18.4K Net Short",
         "seasonality": "Saisonal Neutral"
     },
     "LE=F": {
-        "cot_score": "74% (Optimistisch)",
+        "cot_score": "70% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+60.8K Net Long",
+        "inventories": "+53.8K Net Long",
         "seasonality": "Saisonal Neutral"
     },
     "HO=F": {
