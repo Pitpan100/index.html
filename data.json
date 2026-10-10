@@ -1,68 +1,68 @@
 {
     "GC=F": {
-        "cot_score": "35% (Bärisch)",
+        "cot_score": "36% (Bärisch)",
         "term_structure": "Backwardation (Knappheit)",
         "inventories": "-0.6K Net Short",
         "seasonality": "Saisonal Stabil"
     },
     "CL=F": {
-        "cot_score": "58% (Optimistisch)",
+        "cot_score": "75% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+23.5K Net Long",
+        "inventories": "+45.1K Net Long",
         "seasonality": "Bärisch (Wartungsintervalle)"
     },
     "SI=F": {
-        "cot_score": "73% (Optimistisch)",
+        "cot_score": "75% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+20.4K Net Long",
+        "inventories": "+21.4K Net Long",
         "seasonality": "Saisonal Stabil"
     },
     "HG=F": {
-        "cot_score": "76% (Optimistisch)",
+        "cot_score": "73% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+85.6K Net Long",
+        "inventories": "+69.6K Net Long",
         "seasonality": "Saisonal Neutral"
     },
     "NG=F": {
-        "cot_score": "60% (Optimistisch)",
+        "cot_score": "100% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+21.4K Net Long",
+        "inventories": "+0.9K Net Long",
         "seasonality": "Bärisch (Injektionsphase)"
     },
     "ZS=F": {
-        "cot_score": "95% (Optimistisch)",
+        "cot_score": "83% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+25.3K Net Long",
+        "inventories": "+269.6K Net Long",
         "seasonality": "Bärisch (Erntedruck)"
     },
     "ZC=F": {
-        "cot_score": "81% (Optimistisch)",
+        "cot_score": "78% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+413.8K Net Long",
+        "inventories": "+350.9K Net Long",
         "seasonality": "Bärisch (Erntedruck)"
     },
     "ZW=F": {
-        "cot_score": "78% (Optimistisch)",
+        "cot_score": "55% (Neutral)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+16.9K Net Long",
+        "inventories": "+16.0K Net Long",
         "seasonality": "Saisonal Neutral"
     },
     "KC=F": {
         "cot_score": "39% (Bärisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "-1.0K Net Short",
+        "inventories": "-1.2K Net Short",
         "seasonality": "Saisonal Neutral"
     },
     "CC=F": {
-        "cot_score": "29% (Bärisch)",
+        "cot_score": "31% (Bärisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "-25.1K Net Short",
+        "inventories": "-22.3K Net Short",
         "seasonality": "Saisonal Neutral"
     },
     "LE=F": {
-        "cot_score": "68% (Optimistisch)",
+        "cot_score": "69% (Optimistisch)",
         "term_structure": "Backwardation (Knappheit)",
-        "inventories": "+48.0K Net Long",
+        "inventories": "+48.7K Net Long",
         "seasonality": "Saisonal Neutral"
     },
     "HO=F": {
